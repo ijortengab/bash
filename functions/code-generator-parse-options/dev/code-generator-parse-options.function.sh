@@ -3,7 +3,7 @@
 #
 # @filename: code-generator-parse-options.function.sh
 # @version: 1.0
-# @release-date: 20201224
+# @release-date: 20201228
 # @author: IjorTengab <ijortengab@gmail.com>
 #
 # Membuat code untuk memparsing options dari argument yang biasanya digunakan
@@ -11,8 +11,10 @@
 #
 # Globals:
 #   Used:
-#     FLAG, VALUE, FLAG_VALUE, MULTIVALUE, INCREMENT,
-#     PARAMETER_ORIGINAL_ARGUMENTS (Default value is `ORIGINAL_ARGUMENTS`)
+#     FLAG, VALUE, FLAG_VALUE, MULTIVALUE, INCREMENT (For simple options
+#     definition).
+#     CSV (For complex options definition).
+#     ORIGINAL_ARGUMENTS (Default value is `ORIGINAL_ARGUMENTS`)
 #     INDENT (Default value is `    ` four spaces)
 #
 # Arguments:
@@ -58,9 +60,9 @@
 #   1: Tidak bisa membuat code karena options yang didefinisikan tidak ada.
 #
 # Output:
-#   Menulis code ke stdout
+#   Menulis generated code ke stdout
 #
-source /home/ijortengab/gist/var-dump.function.sh
+source /home/ijortengab/github.com/ijortengab/bash/functions/var-dump/dev/var-dump.function.sh
 
 CodeGeneratorParseOptions() {
 
@@ -76,11 +78,13 @@ CodeGeneratorParseOptions() {
     local E e i j
 
     # Temporary Variable.
-    local _csv _sort _parameter _long_option _short_option _type
+    local _row _csv
+    local _sort _parameter _long_option _short_option _short_option_strlen _type
     local _alphabet _add _priority _sort_type _case _lines
 
     # Storage hasil mengolah $global.
-    local csv_all=() csv_short_option=() csv_short_option_flag_value=()
+    local csv_all=()
+    local csv_short_option_strlen_1=() csv_short_option_strlen_1_flag_value=()
 
     local optstring
     local short_option_flag_value=
@@ -94,8 +98,6 @@ CodeGeneratorParseOptions() {
     local no_hash_bang=0
     local path_shell="/bin/bash"
     local compact=0
-    local no_error_invalid_options=0
-    local no_error_require_arguments=0
     local sort='priority,alphabet'
     local sort_type_flag=1
     local sort_type_value=2
@@ -170,7 +172,7 @@ CodeGeneratorParseOptions() {
     buildParameter() {
         local string
         string=${1//-/_}
-        string=$(echo $string | sed "s/^__//")
+        string=$(echo $string | sed -E "s/^_+//")
         echo $string
     }
 
@@ -212,7 +214,7 @@ CodeGeneratorParseOptions() {
     # Mengecek validitas dari short option name.
     #
     # Globals:
-    #   None
+    #   Modified: _short_option_strlen
     #
     # Arguments:
     #   $1: Value yang akan dicek.
@@ -224,16 +226,29 @@ CodeGeneratorParseOptions() {
     # Contoh valid: -a -V
     #
     validateShortOptionName() {
-        # Kasih underscore diawal sebagai hack.
-        # Karena ditemukan error pada value -n.
-        correct=$(echo _"$1" | grep '^_-[a-zA-Z]$')
+        # Kasih underscore diawal agar tidak dianggap sebagai options
+        # dari command echo.
+        correct=$(echo _"$1" | grep -E '^_-[a-zA-Z]+$')
         if [[ $correct == '' ]];then
-            echo 'Short option name must beginning with single dash (-) followed by single alphabet (a-z, A-Z).' >&2
+            echo 'Short option name must beginning with single dash (-) followed by alphabet (a-z, A-Z).' >&2
             return 1
         fi
+        _short_option_strlen=${#1}
+        ((_short_option_strlen=$_short_option_strlen-1))
         return 0
     }
 
+    # Populate global variable dari baris data CSV.
+    #
+    # Globals:
+    #   Modified: _long_option, _short_option, _type, _priority, _parameter
+    #
+    # Arguments:
+    #   $1: Value yang akan parsing berdasarkan CSV.
+    #
+    # Returns:
+    #   None
+    #
     parseCSV() {
         local e array key value pair
         # Split.
@@ -255,12 +270,27 @@ CodeGeneratorParseOptions() {
         done
     }
 
+    # Populate global variable dari string format options.
+    #
+    # Contoh: `--long-options|-lo` `-o` `--verbose`
+    #
+    # Globals:
+    #   Modified: _long_option, _short_option
+    #
+    # Arguments:
+    #   $1: Value yang akan parsing.
+    #
+    # Returns:
+    #   None
+    #
     parseFormatOption() {
         if [[ "$1" =~ \| ]];then
             _long_option=$(echo "$1" | sed 's/|.*$//')
             _short_option=$(echo "$1" | sed 's/^.*|//')
-        else
+        elif [[ "$1" =~ ^--[^-] ]];then
             _long_option="$1"
+        elif [[ "$1" =~ ^-[^-] ]];then
+            _short_option="$1"
         fi
     }
 
@@ -284,6 +314,7 @@ CodeGeneratorParseOptions() {
         _parameter=0
         _long_option=0
         _short_option=0
+        _short_option_strlen=0
         _type=0
         # Split.
         array=(${1//,/ })
@@ -291,9 +322,22 @@ CodeGeneratorParseOptions() {
         _parameter=${array[1]}
         _long_option=${array[2]}
         _short_option=${array[3]}
-        _type=${array[4]}
+        _short_option_strlen=${array[4]}
+        _type=${array[5]}
     }
 
+    # Populate global variable untuk membuat string yang bisa disort.
+    #
+    # Globals:
+    #   Used: _priority, _sort_type, _alphabet
+    #   Modified: _sort
+    #
+    # Arguments:
+    #   $1: Value yang akan parsing berdasarkan CSV.
+    #
+    # Returns:
+    #   None
+    #
     populateSort() {
         local e array
         _sort=
@@ -308,9 +352,34 @@ CodeGeneratorParseOptions() {
         done
     }
 
+    # Populate global variable untuk membuat string yang digunakan dalam looping
+    # `case)`.
+    #
+    # Globals:
+    #   Used: _long_option, _short_option
+    #   Modified: _case
+    #
+    # Arguments:
+    #   $1: Tambahan string.
+    #
+    # Returns:
+    #   None
+    #
+    populateCase() {
+        local append="$1"
+        _case=()
+        if [[ ! $_long_option == 0 ]];then
+            _case+=("$_long_option$append")
+        fi
+        if [[ ! $_short_option == 0 ]];then
+            _case+=("$_short_option$append")
+        fi
+        _case=$(printf "%s" "${_case[@]/#/|}" | cut -c2-)
+    }
+
     # Set default value for define.
-    if [[ ! $PARAMETER_ORIGINAL_ARGUMENTS == "" ]];then
-        original_arguments=$PARAMETER_ORIGINAL_ARGUMENTS
+    if [[ ! $ORIGINAL_ARGUMENTS == "" ]];then
+        original_arguments=$ORIGINAL_ARGUMENTS
     else
         original_arguments='ORIGINAL_ARGUMENTS'
     fi
@@ -323,7 +392,7 @@ CodeGeneratorParseOptions() {
     # Start populate.
     for E in "${global[@]}"
     do
-        # Duplicate variable.
+        # Clone array.
         eval _global=\(\"\$\{$E\[@\]\}\"\)
         for e in "${_global[@]}"
         do
@@ -333,6 +402,7 @@ CodeGeneratorParseOptions() {
             _parameter=0
             _long_option=0
             _short_option=0
+            _short_option_strlen=0
             _type=0
             _priority= # not stored in local CSV
             # Parsing now.
@@ -345,9 +415,11 @@ CodeGeneratorParseOptions() {
                 CSV) parseCSV "$e" ;;
             esac
             # Validate.
-            if ! validateLongOptionName "$_long_option";then
-                echo Option name is not valid: '`'"$_long_option"'`'. >&2
-                continue
+            if [[ ! $_long_option == 0 ]];then
+                if ! validateLongOptionName "$_long_option";then
+                    echo Option name is not valid: '`'"$_long_option"'`'. >&2
+                    continue
+                fi
             fi
             if [[ ! $_short_option == 0 ]];then
                 if ! validateShortOptionName "$_short_option";then
@@ -357,7 +429,12 @@ CodeGeneratorParseOptions() {
             fi
             # Populate _parameter.
             if [[ $_parameter == 0 ]];then
-                _parameter=$(buildParameter "$_long_option")
+                # Long option first, then short option.
+                if [[ ! $_long_option == 0 ]];then
+                    _parameter=$(buildParameter "$_long_option")
+                else
+                    _parameter=$(buildParameter "$_short_option")
+                fi
             fi
             # Populate _sort.
             if [[ $_priority == '' ]];then
@@ -372,20 +449,21 @@ CodeGeneratorParseOptions() {
             eval _sort_type=\$sort_type_$_type
             _alphabet=$(echo $_long_option | cut -c3-3)
             populateSort
-            csv_all+=("$_sort , $_parameter , $_long_option , $_short_option , $_type")
-            if [[ ! $_short_option == 0 ]];then
+            _row="$_sort , $_parameter , $_long_option , $_short_option , $_short_option_strlen , $_type"
+            csv_all+=("$_row")
+            if [[ ! $_short_option == 0 && $_short_option_strlen == 1 ]];then
                 _alphabet=${_short_option//-/}
                 populateSort
-                csv_short_option+=("$_sort , $_parameter , $_long_option , $_short_option , $_type")
+                csv_short_option_strlen_1+=("$_row")
                 if [[ $_type == flag_value ]];then
-                    csv_short_option_flag_value+=("$_sort , $_parameter , $_long_option , $_short_option , $_type")
+                    csv_short_option_strlen_1_flag_value+=("$_row")
                 fi
             fi
         done
     done
     IFS=$'\n' csv_all=($(sort <<<"${csv_all[*]}")); unset IFS
-    IFS=$'\n' csv_short_option=($(sort <<<"${csv_short_option[*]}")); unset IFS
-    IFS=$'\n' csv_short_option_flag_value=($(sort <<<"${csv_short_option_flag_value[*]}")); unset IFS
+    IFS=$'\n' csv_short_option_strlen_1=($(sort <<<"${csv_short_option_strlen_1[*]}")); unset IFS
+    IFS=$'\n' csv_short_option_strlen_1_flag_value=($(sort <<<"${csv_short_option_strlen_1_flag_value[*]}")); unset IFS
 
     if [[ "${#csv_all[@]}" -lt 1 ]];then
         return 1
@@ -407,7 +485,7 @@ CodeGeneratorParseOptions() {
     for e in "${csv_all[@]}"
     do
         parseLocalCSV "$e"
-        if [[ ! $_short_option == 0 ]];then
+        if [[ ! $_short_option == 0 && $_short_option_strlen == 1 ]];then
             _alphabet=${_short_option//-/}
             case "$_type" in
                 flag)
@@ -435,10 +513,7 @@ CodeGeneratorParseOptions() {
         fi
         case "$_type" in
             flag)
-                _case=$_long_option
-                if [[ ! $_short_option == 0 ]];then
-                    _case+='|'$_short_option
-                fi
+                populateCase
                 if [[ $compact == 1 ]];then
                     lines_5+=(      "$____$____"$_case') '$_parameter'=1; shift ;; # '$_type)
                 else
@@ -450,10 +525,7 @@ CodeGeneratorParseOptions() {
                 fi
                 ;;
             value)
-                _case=$_long_option'=*'
-                if [[ ! $_short_option == 0 ]];then
-                    _case+='|'$_short_option'=*'
-                fi
+                populateCase '=*'
                 if [[ $compact == 1 ]];then
                     lines_5+=(      "$____$____"$_case') '$_parameter'="${1#*=}"; shift ;; # '$_type)
                 else
@@ -463,10 +535,7 @@ CodeGeneratorParseOptions() {
                     lines_5+=(      "$____$____$____"'shift')
                     lines_5+=(      "$____$____$____"';;')
                 fi
-                _case=$_long_option
-                if [[ ! $_short_option == 0 ]];then
-                    _case+='|'$_short_option
-                fi
+                populateCase
                 if [[ $compact == 1 ]];then
                     _add='; else echo "Option $1 requires an argument." >&2'
                     if [[ $no_error_require_arguments == 1 ]];then
@@ -478,7 +547,7 @@ CodeGeneratorParseOptions() {
                     lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^- ]];then')
                     lines_5+=(      "$____$____$____$____"$_parameter'="$2"')
                     lines_5+=(      "$____$____$____$____"'shift')
-                    if [[ $no_error_require_arguments == 0 ]];then
+                    if [[ ! $no_error_require_arguments == 1 ]];then
                         lines_5+=(  "$____$____$____"'else')
                         lines_5+=(  "$____$____$____$____"'echo "Option $1 requires an argument." >&2')
                     fi
@@ -488,10 +557,7 @@ CodeGeneratorParseOptions() {
                 fi
                 ;;
             flag_value)
-                _case=$_long_option'=*'
-                if [[ ! $_short_option == 0 ]];then
-                    _case+='|'$_short_option'=*'
-                fi
+                populateCase '=*'
                 if [[ $compact == 1 ]];then
                     lines_5+=(      "$____$____"$_case') '$_parameter'="${1#*=}"; shift ;; # '$_type)
                 else
@@ -501,10 +567,7 @@ CodeGeneratorParseOptions() {
                     lines_5+=(      "$____$____$____"'shift')
                     lines_5+=(      "$____$____$____"';;')
                 fi
-                _case=$_long_option
-                if [[ ! $_short_option == 0 ]];then
-                    _case+='|'$_short_option
-                fi
+                populateCase
                 if [[ $compact == 1 ]];then
                     lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^- ]]; then '$_parameter'="$2"; shift; else '$_parameter'=1; fi; shift ;; # '$_type)
                 else
@@ -520,10 +583,7 @@ CodeGeneratorParseOptions() {
                 fi
                 ;;
             increment)
-                _case=$_long_option
-                if [[ ! $_short_option == 0 ]];then
-                    _case+='|'$_short_option
-                fi
+                populateCase
                 if [[ $compact == 1 ]];then
                     lines_5+=(      "$____$____"$_case') '$_parameter'="$(('$_parameter'+1))"; shift ;; # '$_type)
                 else
@@ -535,10 +595,7 @@ CodeGeneratorParseOptions() {
                 fi
                 ;;
             multivalue)
-                _case=$_long_option'=*'
-                if [[ ! $_short_option == 0 ]];then
-                    _case+='|'$_short_option'=*'
-                fi
+                populateCase '=*'
                 if [[ $compact == 1 ]];then
                     lines_5+=(      "$____$____"$_case') '$_parameter'+=("${1#*=}"); shift ;; # '$_type)
                 else
@@ -548,10 +605,7 @@ CodeGeneratorParseOptions() {
                     lines_5+=(      "$____$____$____"'shift')
                     lines_5+=(      "$____$____$____"';;')
                 fi
-                _case=$_long_option
-                if [[ ! $_short_option == 0 ]];then
-                    _case+='|'$_short_option
-                fi
+                populateCase
                 if [[ $compact == 1 ]];then
                     _add='; else echo "Option $1 requires an argument." >&2'
                     if [[ $no_error_require_arguments == 1 ]];then
@@ -563,7 +617,7 @@ CodeGeneratorParseOptions() {
                     lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^- ]];then')
                     lines_5+=(      "$____$____$____$____"$_parameter'+=("$2")')
                     lines_5+=(      "$____$____$____$____"'shift')
-                    if [[ $no_error_require_arguments == 0 ]];then
+                    if [[ ! $no_error_require_arguments == 1 ]];then
                         lines_5+=(  "$____$____$____"'else')
                         lines_5+=(  "$____$____$____$____"'echo "Option $1 requires an argument." >&2')
                     fi
@@ -574,7 +628,7 @@ CodeGeneratorParseOptions() {
                 ;;
         esac
     done
-    lines_4+=(                      '# Processing double dash options.')
+    lines_4+=(                      '# Processing standalone options.')
     lines_4+=(                      'while [[ $# -gt 0 ]]; do')
     lines_4+=(                      "$____"'case "$1" in')
     if [[ $compact == 1 ]];then
@@ -608,7 +662,7 @@ CodeGeneratorParseOptions() {
         lines_7+=(                  '# Reset temporary variable.')
         lines_7+=(                  '_'$original_arguments'=()')
         lines_7+=('')
-        lines_7+=(                  '# Processing single dash options.')
+        lines_7+=(                  '# Processing compiled single character options.')
         lines_7+=(                  'while [[ $# -gt 0 ]]; do')
         lines_7+=(                  "$____"'case "$1" in')
         if [[ $compact == 1 ]];then
@@ -636,7 +690,7 @@ CodeGeneratorParseOptions() {
         lines_9+=('')
         lines_9+=(                  'set -- "${_'$original_arguments'[@]}"')
         lines_9+=('')
-        for e in "${csv_short_option[@]}"; do
+        for e in "${csv_short_option_strlen_1[@]}"; do
             parseLocalCSV "$e"
             _alphabet=${_short_option//-/}
             _add=
@@ -667,7 +721,7 @@ CodeGeneratorParseOptions() {
                 fi
         done
 
-        if [[ $no_error_invalid_options == 0 ]];then
+        if [[ ! $no_error_invalid_options == 1 ]];then
             if [[ $compact == 1 ]];then
                 lines_8+=(          "$____$____$____$____$____"'\?) echo "Invalid option: -$OPTARG" >&2 ;;')
             else
@@ -676,14 +730,14 @@ CodeGeneratorParseOptions() {
                 lines_8+=(          "$____$____$____$____$____$____"';;')
             fi
         fi
-        if [[ ${#csv_short_option_flag_value[@]} -gt 0 ]];then
+        if [[ ${#csv_short_option_strlen_1_flag_value[@]} -gt 0 ]];then
             _lines=()
             _add=
-            if [[ $no_error_require_arguments == 0 ]];then
+            if [[ ! $no_error_require_arguments == 1 ]];then
                 _add="$____"
             fi
             _lines+=(               "$_add$____$____$____$____$____$____"'case $OPTARG in')
-            for e in "${csv_short_option_flag_value[@]}"; do
+            for e in "${csv_short_option_strlen_1_flag_value[@]}"; do
                 parseLocalCSV "$e"
                 _alphabet=${_short_option//-/}
                 if [[ $compact == 1 ]];then
@@ -697,9 +751,9 @@ CodeGeneratorParseOptions() {
             done
             _lines+=(               "$_add$____$____$____$____$____$____"'esac')
         fi
-        if [[ ${#csv_short_option_flag_value[@]} -gt 0 ]];then
+        if [[ ${#csv_short_option_strlen_1_flag_value[@]} -gt 0 ]];then
             lines_8+=("$____$____$____$____$____"':)')
-            if [[ $no_error_require_arguments == 0 ]];then
+            if [[ ! $no_error_require_arguments == 1 ]];then
                 if [[ $compact == 1 ]];then
                     lines_8+=(      "$____$____$____$____$____$____"'if [[ ! $OPTARG =~ ['$short_option_flag_value'] ]];then echo "Option -$OPTARG requires an argument." >&2')
                 else
@@ -712,18 +766,18 @@ CodeGeneratorParseOptions() {
             do
                 lines_8+=("$e")
             done
-            if [[ $no_error_require_arguments == 0 ]];then
+            if [[ ! $no_error_require_arguments == 1 ]];then
                 lines_8+=(          "$____$____$____$____$____$____"'fi')
             fi
             lines_8+=(              "$____$____$____$____$____$____"';;')
-        elif [[ $no_error_require_arguments == 0 ]];then
+        elif [[ ! $no_error_require_arguments == 1 ]];then
             lines_8+=(              "$____$____$____$____$____"':) echo "Option -$OPTARG requires an argument." >&2 ;;')
         fi
     fi
 
     lines_9+=(                      'unset _'$original_arguments)
     lines_9+=('')
-    
+
     # Print.
     for e in "${lines_1[@]}"
     do
