@@ -173,6 +173,9 @@ CodeGeneratorParseOptions() {
         local string
         string=${1//-/_}
         string=$(echo $string | sed -E "s/^_+//")
+        if [[ $string =~ ^[0-9] ]];then
+            string=_$string
+        fi
         echo $string
     }
 
@@ -223,14 +226,14 @@ CodeGeneratorParseOptions() {
     #   0: Valid
     #   1: Tidak valid
     #
-    # Contoh valid: -a -V
+    # Contoh valid: -a -V -4 -6
     #
     validateShortOptionName() {
         # Kasih underscore diawal agar tidak dianggap sebagai options
         # dari command echo.
-        correct=$(echo _"$1" | grep -E '^_-[a-zA-Z]+$')
+        correct=$(echo _"$1" | grep -E '^_-[a-zA-Z0-9]+$')
         if [[ $correct == '' ]];then
-            echo 'Short option name must beginning with single dash (-) followed by alphabet (a-z, A-Z).' >&2
+            echo 'Short option name must beginning with single dash (-) followed by alphanumeric (0-9, a-z, A-Z).' >&2
             return 1
         fi
         _short_option_strlen=${#1}
