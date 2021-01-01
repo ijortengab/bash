@@ -91,8 +91,8 @@ CodeGeneratorParseOptions() {
     local short_option_with_value=0
     local short_option_without_value=0
 
-    local lines_1=() lines_2=() lines_3=() lines_4=() lines_5=()
-    local lines_6=() lines_7=() lines_8=() lines_9=()
+    local lines= lines_1=() lines_2=() lines_3=() lines_4=()
+    local lines_5=() lines_6=() lines_7=() lines_8=() lines_9=()
 
     # Default value.
     local no_hash_bang=0
@@ -127,6 +127,8 @@ CodeGeneratorParseOptions() {
             --sort-type-increment) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort_type_increment="$2" shift; fi; shift ;;
             --sort-type-multivalue=*) sort_type_multivalue="${1#*=}"; shift ;;
             --sort-type-multivalue) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort_type_multivalue="$2" shift; fi; shift ;;
+            --output-file=*) output_file="${1#*=}"; shift ;;
+            --output-file) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then output_file="$2"; shift; fi; shift ;;
             *) shift ;;
         esac
     done
@@ -360,6 +362,27 @@ CodeGeneratorParseOptions() {
             _case+=("$_short_option$append")
         fi
         _case=$(printf "%s" "${_case[@]/#/|}" | cut -c2-)
+    }
+
+    compileLines() {
+        for e in "${lines_1[@]}"; do lines+="$e""
+"; done
+        for e in "${lines_2[@]}"; do lines+="$e""
+"; done
+        for e in "${lines_3[@]}"; do lines+="$e""
+"; done
+        for e in "${lines_4[@]}"; do lines+="$e""
+"; done
+        for e in "${lines_5[@]}"; do lines+="$e""
+"; done
+        for e in "${lines_6[@]}"; do lines+="$e""
+"; done
+        for e in "${lines_7[@]}"; do lines+="$e""
+"; done
+        for e in "${lines_8[@]}"; do lines+="$e""
+"; done
+        for e in "${lines_9[@]}"; do lines+="$e""
+"; done
     }
 
     # Set default value for define.
@@ -780,41 +803,11 @@ CodeGeneratorParseOptions() {
     lines_9+=(                      'unset _'$original_arguments)
     lines_9+=('')
 
-    # Print.
-    for e in "${lines_1[@]}"
-    do
-        echo "$e"
-    done
-    for e in "${lines_2[@]}"
-    do
-        echo "$e"
-    done
-    for e in "${lines_3[@]}"
-    do
-        echo "$e"
-    done
-    for e in "${lines_4[@]}"
-    do
-        echo "$e"
-    done
-    for e in "${lines_5[@]}"
-    do
-        echo "$e"
-    done
-    for e in "${lines_6[@]}"
-    do
-        echo "$e"
-    done
-    for e in "${lines_7[@]}"
-    do
-        echo "$e"
-    done
-    for e in "${lines_8[@]}"
-    do
-        echo "$e"
-    done
-    for e in "${lines_9[@]}"
-    do
-        echo "$e"
-    done
+    # Output.
+    compileLines
+    if [[ ! $output_file == '' ]];then
+        echo -n "$lines" > $output_file
+    else
+        echo -n "$lines"
+    fi
 }
