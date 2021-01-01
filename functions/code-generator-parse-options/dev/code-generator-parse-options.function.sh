@@ -80,7 +80,7 @@ CodeGeneratorParseOptions() {
     # Temporary Variable.
     local _row _csv
     local _sort _parameter _long_option _short_option _short_option_strlen _type
-    local _alphabet _add _priority _sort_type _case _lines _flag
+    local _alphabet _add _priority _sort_type _case _lines _flag _longest=0
 
     # Storage hasil mengolah $global.
     local csv_all=()
@@ -129,6 +129,8 @@ CodeGeneratorParseOptions() {
             --sort-type-multivalue) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort_type_multivalue="$2" shift; fi; shift ;;
             --output-file=*) output_file="${1#*=}"; shift ;;
             --output-file) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then output_file="$2"; shift; fi; shift ;;
+            --debug-file=*) debug_file="${1#*=}"; shift ;;
+            --debug-file) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then debug_file="$2"; shift; fi; shift ;;
             *) shift ;;
         esac
     done
@@ -385,6 +387,11 @@ CodeGeneratorParseOptions() {
 "; done
     }
 
+    resetLines() {
+        lines=; lines_1=(); lines_2=(); lines_3=(); lines_4=()
+        lines_5=(); lines_6=(); lines_7=(); lines_8=(); lines_9=()
+    }
+
     # Set default value for define.
     if [[ ! $ORIGINAL_ARGUMENTS == "" ]];then
         original_arguments=$ORIGINAL_ARGUMENTS
@@ -454,6 +461,9 @@ CodeGeneratorParseOptions() {
                     _parameter=$(buildParameter "$_long_option")
                 else
                     _parameter=$(buildParameter "$_short_option")
+                fi
+                if [[ ${#_parameter} -gt $_longest ]];then
+                    _longest=${#_parameter}
                 fi
             fi
             # Populate _sort.
@@ -809,5 +819,63 @@ CodeGeneratorParseOptions() {
         echo -n "$lines" > $output_file
     else
         echo -n "$lines"
+    fi
+    if [[ ! $debug_file == '' ]];then
+        resetLines
+        lines_1+=(                  '#!'"$path_shell")
+        lines_1+=('')
+        lines_2+=(                  '# Options')
+        lines_2+=(                  'echo')
+        lines_2+=(                  "echo '# Options'")
+        lines_2+=(                  'echo')
+        for e in "${csv_all[@]}"
+        do
+            parseCSV "$e"
+            _add=
+            for (( i=0; i < (( ${_longest} - ${#_parameter} )) ; i++ )); do
+                _add+="."
+            done
+            _add=" "$_add" "
+            if [[ $_add == " . " ]];then
+                _add="   "
+            elif [[ $_add == " .. " ]];then
+                _add="    "
+            fi
+            case $_type in
+                multivalue)
+                    lines_5+=(      '# multivalue')
+                    lines_5+=(      'echo -n \')
+                    lines_5+=(      '     \$'$_parameter'"'"$_add"'"= '"'( '")
+                    lines_5+=(      'for e in "${'$_parameter'[@]}"')
+                    lines_5+=(      'do')
+                    lines_5+=(      '    if [[ $e =~ " " ]];then')
+                    lines_5+=(      '        echo -n "\"$e\""'"' '")
+                    lines_5+=(      '    else')
+                    lines_5+=(      '        echo -n "$e"'"' '")
+                    lines_5+=(      '    fi')
+                    lines_5+=(      'done')
+                    lines_5+=(      "echo ')'")
+                    ;;
+                *)
+                    lines_5+=(      "echo "'\$'$_parameter'"'"$_add"'"= $'$_parameter)
+                    ;;
+            esac
+        done
+        lines_5+=('')
+        lines_6+=(                  '# Mass Arguments')
+        lines_6+=(                  'echo')
+        lines_6+=(                  "echo '# Mass Arguments'")
+        lines_6+=(                  'echo')
+        lines_6+=(                  'echo \$1 = $1')
+        lines_6+=(                  'echo \$2 = $2')
+        lines_6+=(                  'echo \$3 = $3')
+        lines_6+=(                  'echo \$4 = $4')
+        lines_6+=(                  'echo \$5 = $5')
+        lines_6+=(                  'echo \$6 = $6')
+        lines_6+=(                  'echo \$7 = $7')
+        lines_6+=(                  'echo \$8 = $8')
+        lines_6+=(                  'echo \$9 = $9')
+        compileLines
+        echo -n "$lines" > $debug_file
     fi
 }
