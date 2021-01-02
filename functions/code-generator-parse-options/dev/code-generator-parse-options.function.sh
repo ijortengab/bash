@@ -683,19 +683,15 @@ CodeGeneratorParseOptions() {
     lines_4+=(                      '# Processing standalone options.')
     lines_4+=(                      'while [[ $# -gt 0 ]]; do')
     lines_4+=(                      "$____"'case "$1" in')
-    if [[ $compact == 1 ]];then
-        _add=' echo "Invalid option: $1" >&2;'
-        if [[ $no_error_invalid_options == 1 ]];then
-            _add=
-        fi
-        lines_6+=(                  "$____$____"'--*)'"$_add"' shift ;;')
-    else
-        lines_6+=(                  "$____$____"'--*)')
-        if [[ ! $no_error_invalid_options == 1 ]];then
+    if [[ ! $no_error_invalid_options == 1 ]];then
+        if [[ $compact == 1 ]];then
+            lines_6+=(              "$____$____"'--*) echo "Invalid option: $1" >&2; shift ;;')
+        else
+            lines_6+=(              "$____$____"'--*)')
             lines_6+=(              "$____$____$____"'echo "Invalid option: $1" >&2')
+            lines_6+=(              "$____$____$____"'shift')
+            lines_6+=(              "$____$____$____"';;')
         fi
-        lines_6+=(                  "$____$____$____"'shift')
-        lines_6+=(                  "$____$____$____"';;')
     fi
     if [[ $compact == 1 ]];then
         _add=
