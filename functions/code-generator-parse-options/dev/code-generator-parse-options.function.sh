@@ -15,7 +15,8 @@
 #     definition).
 #     CSV (For complex options definition).
 #     ORIGINAL_ARGUMENTS (Default value is `ORIGINAL_ARGUMENTS`)
-#     NEW_ARGUMENTS (Default value is `_new_arguments`)
+#     _NEW_ARGUMENTS (Default value is `_new_arguments`)
+#     _N (Default value is `_n`)
 #     INDENT (Default value is `    ` four spaces)
 #
 # Arguments:
@@ -63,6 +64,8 @@
 # Output:
 #   Menulis generated code ke stdout
 #
+# Tested in Ubuntu 20.04 bash version:
+# GNU bash, version 4.4.20(1)-release (x86_64-pc-linux-gnu)
 source /home/ijortengab/github.com/ijortengab/bash/functions/var-dump/dev/var-dump.function.sh
 
 CodeGeneratorParseOptions() {
@@ -73,7 +76,7 @@ CodeGeneratorParseOptions() {
     )
 
     # Define.
-    local original_arguments new_arguments print_new_arguments ____
+    local original_arguments new_arguments n print_new_arguments ____
 
     # Temporary Variable used in looping.
     local E e i j
@@ -91,20 +94,20 @@ CodeGeneratorParseOptions() {
     local short_option_flag_value=
     local short_option_with_value=0
     local short_option_without_value=0
+    local temporary_variable=()
 
     local lines= lines_1=() lines_2=() lines_3=() lines_4=()
     local lines_5=() lines_6=() lines_7=() lines_8=() lines_9=()
 
     # Default value.
-    local no_hash_bang=0
     local path_shell="/bin/bash"
-    local compact=0
     local sort='priority,alphabet'
     local sort_type_flag=1
     local sort_type_value=2
     local sort_type_flag_value=3
     local sort_type_increment=4
     local sort_type_multivalue=5
+    local end_options_double_dash=1
 
     # Parse options
     while [[ $# -gt 0 ]]; do
@@ -133,6 +136,8 @@ CodeGeneratorParseOptions() {
             --debug-file=*) debug_file="${1#*=}"; shift ;;
             --debug-file) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then debug_file="$2"; shift; fi; shift ;;
             --no-rebuild-arguments) no_rebuild_arguments=1; shift ;;
+            --with-end-options-double-dash) end_options_double_dash=1; shift ;;
+            --without-end-options-double-dash) end_options_double_dash=0; shift ;;
             *) shift ;;
         esac
     done
@@ -400,12 +405,15 @@ CodeGeneratorParseOptions() {
     else
         original_arguments='ORIGINAL_ARGUMENTS'
     fi
-
-    # Set default value for define.
-    if [[ ! $NEW_ARGUMENTS == "" ]];then
-        new_arguments=$NEW_ARGUMENTS
+    if [[ ! $_NEW_ARGUMENTS == "" ]];then
+        new_arguments=$_NEW_ARGUMENTS
     else
         new_arguments='_new_arguments'
+    fi
+    if [[ ! $_N == "" ]];then
+        n=$_N
+    else
+        n='_n'
     fi
     if [[ ! $INDENT == "" ]];then
         ____=$INDENT
@@ -667,7 +675,6 @@ CodeGeneratorParseOptions() {
                 ;;
         esac
     done
-
     print_new_arguments=1
     if [[ $no_rebuild_arguments == 1 ]];then
         print_new_arguments=0
@@ -675,24 +682,64 @@ CodeGeneratorParseOptions() {
     if [[ $short_option_without_value -gt 1 || $short_option_with_value -gt 0 ]];then
         print_new_arguments=1
     fi
+    if [[ $end_options_double_dash == 1 ]];then
+        print_new_arguments=1
+    fi
     if [[ $print_new_arguments == 1 ]];then
-        lines_3+=(                      '# Temporary variable.')
-        lines_3+=(                      "$new_arguments"'=()')
-        lines_3+=('')
+        temporary_variable+=(       "$new_arguments"'=()')
     fi
     lines_4+=(                      '# Processing standalone options.')
     lines_4+=(                      'while [[ $# -gt 0 ]]; do')
     lines_4+=(                      "$____"'case "$1" in')
+    # Prepare repeat code.
+    if [[ $end_options_double_dash == 1 ]];then
+        # Karena print_new_arguments=1, maka tambahkan langsung new_arguments.
+        _lines=()
+        _lines+=(                   'while [[ $# -gt 0 ]]; do')
+        _lines+=(                   "$____"'case "$1" in')
+        if [[ $compact == 1 ]];then
+            _lines+=(               "$____$____"'*) '"$new_arguments"'+=("$1"); shift ;;')
+        else
+            _lines+=(               "$____$____"'*)')
+            _lines+=(               "$____$____$____""$new_arguments"'+=("$1")')
+            _lines+=(               "$____$____$____"'shift')
+            _lines+=(               "$____$____$____"';;')
+        fi
+        _lines+=(                   "$____"'esac')
+        _lines+=(                   'done')
+    fi
+    # Double dash.
+    if [[ $end_options_double_dash == 1 ]];then
+        if [[ $short_option_without_value -gt 1 || $short_option_with_value -gt 0 ]];then
+            # Double dash akan dilanjutkan di looping kedua.
+            # Jadi double dash perlu dimasukkan juga ke `_new_arguments`.
+            lines_6+=(              "$____$____"'--)')
+        else
+            if [[ $compact == 1 ]];then
+                lines_6+=(          "$____$____"'--) shift')
+            else
+                lines_6+=(          "$____$____"'--)')
+                lines_6+=(          "$____$____$____"'shift')
+            fi
+        fi
+        for e in "${_lines[@]}"
+        do
+            lines_6+=(              "$____$____$____""$e")
+        done
+        lines_6+=(                  "$____$____$____"';;')
+    fi
+    # Invalid long options with double dash.
     if [[ ! $no_error_invalid_options == 1 ]];then
         if [[ $compact == 1 ]];then
-            lines_6+=(              "$____$____"'--*) echo "Invalid option: $1" >&2; shift ;;')
+            lines_6+=(              "$____$____"'--[^-]*) echo "Invalid option: $1" >&2; shift ;;')
         else
-            lines_6+=(              "$____$____"'--*)')
+            lines_6+=(              "$____$____"'--[^-]*)')
             lines_6+=(              "$____$____$____"'echo "Invalid option: $1" >&2')
             lines_6+=(              "$____$____$____"'shift')
             lines_6+=(              "$____$____$____"';;')
         fi
     fi
+    # Asterix.
     if [[ $compact == 1 ]];then
         _add=
         if [[ $print_new_arguments == 1 ]];then
@@ -716,7 +763,7 @@ CodeGeneratorParseOptions() {
     fi
 
     if [[ $short_option_without_value -gt 1 || $short_option_with_value -gt 0 ]];then
-        lines_7+=(                  '# Reset temporary variable.')
+        lines_7+=(                  '# Truncate.')
         lines_7+=(                  "$new_arguments"'=()')
         lines_7+=('')
         lines_7+=(                  '# Processing compiled single character options.')
@@ -732,8 +779,36 @@ CodeGeneratorParseOptions() {
         lines_7+=(                  "$____$____$____$____"'case $opt in')
         lines_9+=(                  "$____$____$____$____"'esac')
         lines_9+=(                  "$____$____$____"'done')
+        if [[ $end_options_double_dash == 1 ]];then
+            temporary_variable+=(   "$n"'=')
+            lines_9+=(              "$____$____$____""$n"'="$((OPTIND-1))"')
+            lines_9+=(              "$____$____$____""$n"'=${!'"$n"'}')
+        fi
         lines_9+=(                  "$____$____$____"'shift "$((OPTIND-1))"')
+        if [[ $end_options_double_dash == 1 ]];then
+            lines_9+=(              "$____$____$____"'if [[ "$'"$n"'" == '"'"'--'"'"' ]];then')
+            for e in "${_lines[@]}"
+            do
+                lines_9+=(          "$____$____$____$____""$e")
+            done
+            lines_9+=(              "$____$____$____"'fi')
+        fi
         lines_9+=(                  "$____$____$____"';;')
+        # Double dash.
+        if [[ $end_options_double_dash == 1 ]];then
+            if [[ $compact == 1 ]];then
+                lines_9+=(          "$____$____"'--) shift')
+            else
+                lines_9+=(          "$____$____"'--)')
+                lines_9+=(          "$____$____$____"'shift')
+            fi
+            for e in "${_lines[@]}"
+            do
+                lines_9+=(          "$____$____$____""$e")
+            done
+            lines_9+=(              "$____$____$____"';;')
+        fi
+        # Asterix.
         if [[ $compact == 1 ]];then
             lines_9+=(              "$____$____"'*) '"$new_arguments"'+=("$1"); shift ;;')
         else
@@ -767,17 +842,17 @@ CodeGeneratorParseOptions() {
                 multivalue)
                     _add=$_parameter'=("$OPTARG")'
                     ;;
-                esac
-                if [[ $compact == 1 ]];then
-                    lines_8+=(      "$____$____$____$____$____"$_alphabet')'' '$_add' ;; # '$_type)
-                else
-                    lines_8+=(      "$____$____$____$____$____"'# '$_type)
-                    lines_8+=(      "$____$____$____$____$____"$_alphabet')')
-                    lines_8+=(      "$____$____$____$____$____$____"$_add)
-                    lines_8+=(      "$____$____$____$____$____$____"';;')
-                fi
+            esac
+            if [[ $compact == 1 ]];then
+                lines_8+=(          "$____$____$____$____$____"$_alphabet')'' '$_add' ;; # '$_type)
+            else
+                lines_8+=(          "$____$____$____$____$____"'# '$_type)
+                lines_8+=(          "$____$____$____$____$____"$_alphabet')')
+                lines_8+=(          "$____$____$____$____$____$____"$_add)
+                lines_8+=(          "$____$____$____$____$____$____"';;')
+            fi
         done
-
+        # Question.
         if [[ ! $no_error_invalid_options == 1 ]];then
             if [[ $compact == 1 ]];then
                 lines_8+=(          "$____$____$____$____$____"'\?) echo "Invalid option: -$OPTARG" >&2 ;;')
@@ -789,28 +864,26 @@ CodeGeneratorParseOptions() {
         fi
         if [[ ${#csv_short_option_strlen_1_flag_value[@]} -gt 0 ]];then
             _lines=()
-            _add=
-            if [[ ! $no_error_require_arguments == 1 ]];then
-                _add="$____"
-            fi
-            _lines+=(               "$_add$____$____$____$____$____$____"'case $OPTARG in')
+            _lines+=(               'case $OPTARG in')
             for e in "${csv_short_option_strlen_1_flag_value[@]}"; do
                 parseCSV "$e"
                 _alphabet=${_short_option//-/}
                 if [[ $compact == 1 ]];then
-                    _lines+=(       "$_add$____$____$____$____$____$____$____"$_alphabet') '$_parameter'='$_flag' ;;')
+                    _lines+=(       "$____"$_alphabet') '$_parameter'='$_flag' ;;')
                 else
-                    _lines+=(       "$_add$____$____$____$____$____$____$____"$_alphabet')')
-                    _lines+=(       "$_add$____$____$____$____$____$____$____$____"$_parameter'='$_flag)
-                    _lines+=(       "$_add$____$____$____$____$____$____$____$____"';;')
-
+                    _lines+=(       "$____"$_alphabet')')
+                    _lines+=(       "$____$____"$_parameter'='$_flag)
+                    _lines+=(       "$____$____"';;')
                 fi
             done
-            _lines+=(               "$_add$____$____$____$____$____$____"'esac')
+            _lines+=(               'esac')
         fi
+        # Colon.
         if [[ ${#csv_short_option_strlen_1_flag_value[@]} -gt 0 ]];then
             lines_8+=("$____$____$____$____$____"':)')
+            _add=
             if [[ ! $no_error_require_arguments == 1 ]];then
+                _add="$____"
                 if [[ $compact == 1 ]];then
                     lines_8+=(      "$____$____$____$____$____$____"'if [[ ! $OPTARG =~ ['$short_option_flag_value'] ]];then echo "Option -$OPTARG requires an argument." >&2')
                 else
@@ -821,7 +894,7 @@ CodeGeneratorParseOptions() {
             fi
             for e in "${_lines[@]}"
             do
-                lines_8+=("$e")
+                lines_8+=(          "$_add$____$____$____$____$____$____""$e")
             done
             if [[ ! $no_error_require_arguments == 1 ]];then
                 lines_8+=(          "$____$____$____$____$____$____"'fi')
@@ -832,8 +905,14 @@ CodeGeneratorParseOptions() {
         fi
     fi
 
-    if [[ $print_new_arguments == 1 ]];then
-        lines_9+=(                  'unset '"$new_arguments")
+    if [[ ${#temporary_variable[@]} -gt 0 ]];then
+        lines_3+=(                  '# Temporary variable.')
+        for e in "${temporary_variable[@]}"
+        do
+            lines_3+=(              "$e")
+            lines_9+=(                  'unset '"${e%=*}")
+        done
+        lines_3+=('')
         lines_9+=('')
     fi
 
