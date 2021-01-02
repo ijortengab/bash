@@ -112,26 +112,26 @@ CodeGeneratorParseOptions() {
             --no-hash-bang) no_hash_bang=1; shift ;;
             --no-original-arguments) no_original_arguments=1; shift ;;
             --path-shell=*) path_shell="${1#*=}"; shift ;;
-            --path-shell) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then path_shell="$2"; shift; fi; shift ;;
+            --path-shell) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then path_shell="$2"; shift; fi; shift ;;
             --compact) compact=1; shift ;;
             --no-error-invalid-options) no_error_invalid_options=1; shift ;;
             --no-error-require-arguments) no_error_require_arguments=1; shift ;;
             --sort=*) sort="${1#*=}"; shift ;;
-            --sort) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort="$2" shift; fi; shift ;;
+            --sort) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort="$2" shift; fi; shift ;;
             --sort-type-flag=*) sort_type_flag="${1#*=}"; shift ;;
-            --sort-type-flag) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort_type_flag="$2" shift; fi; shift ;;
+            --sort-type-flag) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_flag="$2" shift; fi; shift ;;
             --sort-type-value=*) sort_type_value="${1#*=}"; shift ;;
-            --sort-type-value) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort_type_value="$2" shift; fi; shift ;;
+            --sort-type-value) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_value="$2" shift; fi; shift ;;
             --sort-type-flag-value=*) sort_type_flag_value="${1#*=}"; shift ;;
-            --sort-type-flag-value) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort_type_flag_value="$2" shift; fi; shift ;;
+            --sort-type-flag-value) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_flag_value="$2" shift; fi; shift ;;
             --sort-type-increment=*) sort_type_increment="${1#*=}"; shift ;;
-            --sort-type-increment) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort_type_increment="$2" shift; fi; shift ;;
+            --sort-type-increment) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_increment="$2" shift; fi; shift ;;
             --sort-type-multivalue=*) sort_type_multivalue="${1#*=}"; shift ;;
-            --sort-type-multivalue) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then sort_type_multivalue="$2" shift; fi; shift ;;
+            --sort-type-multivalue) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_multivalue="$2" shift; fi; shift ;;
             --output-file=*) output_file="${1#*=}"; shift ;;
-            --output-file) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then output_file="$2"; shift; fi; shift ;;
+            --output-file) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then output_file="$2"; shift; fi; shift ;;
             --debug-file=*) debug_file="${1#*=}"; shift ;;
-            --debug-file) if [[ ! $2 == "" && ! $2 =~ ^- ]]; then debug_file="$2"; shift; fi; shift ;;
+            --debug-file) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then debug_file="$2"; shift; fi; shift ;;
             --no-rebuild-arguments) no_rebuild_arguments=1; shift ;;
             *) shift ;;
         esac
@@ -580,10 +580,10 @@ CodeGeneratorParseOptions() {
                     if [[ $no_error_require_arguments == 1 ]];then
                         _add=
                     fi
-                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^- ]]; then '$_parameter'="$2"; shift'"$_add"'; fi; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'="$2"; shift'"$_add"'; fi; shift ;; # '$_type)
                 else
                     lines_5+=(      "$____$____"$_case')')
-                    lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^- ]];then')
+                    lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then')
                     lines_5+=(      "$____$____$____$____"$_parameter'="$2"')
                     lines_5+=(      "$____$____$____$____"'shift')
                     if [[ ! $no_error_require_arguments == 1 ]];then
@@ -608,10 +608,10 @@ CodeGeneratorParseOptions() {
                 fi
                 populateCase
                 if [[ $compact == 1 ]];then
-                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^- ]]; then '$_parameter'="$2"; shift; else '$_parameter'='$_flag'; fi; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'="$2"; shift; else '$_parameter'='$_flag'; fi; shift ;; # '$_type)
                 else
                     lines_5+=(      "$____$____"$_case')')
-                    lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^- ]];then')
+                    lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then')
                     lines_5+=(      "$____$____$____$____"$_parameter'="$2"')
                     lines_5+=(      "$____$____$____$____"'shift')
                     lines_5+=(      "$____$____$____"'else')
@@ -650,10 +650,10 @@ CodeGeneratorParseOptions() {
                     if [[ $no_error_require_arguments == 1 ]];then
                         _add=
                     fi
-                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^- ]]; then '$_parameter'+=("$2"); shift'"$_add"'; fi; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'+=("$2"); shift'"$_add"'; fi; shift ;; # '$_type)
                 else
                     lines_5+=(      "$____$____"$_case')')
-                    lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^- ]];then')
+                    lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then')
                     lines_5+=(      "$____$____$____$____"$_parameter'+=("$2")')
                     lines_5+=(      "$____$____$____$____"'shift')
                     if [[ ! $no_error_require_arguments == 1 ]];then
