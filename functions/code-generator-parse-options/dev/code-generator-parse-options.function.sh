@@ -36,6 +36,16 @@
 #     Code tidak akan terdapat hash bang diawal script.
 #   --no-original-arguments
 #     Code tidak akan terdapat definisi original arguments.
+#   --no-rebuild-arguments
+#     Code tidak akan melakukan reposisi arguments (set -- ${array[@]})
+#     Gunakan jika script memang tidak terdapat operand (arguments non option)
+#     atau keseluruhan options adalah standalone.
+#     Option ini tidak berlaku jika terjadi looping kedua dengan getopts, yakni
+#     terdapat satu shortoption single character type yg butuh value (value,
+#     flag_value, multivalue) atau terdapat minimal dua shortoption single
+#     character yang tidak butuh value (flag, flag_value, increment).
+#     Option ini juga tidak berlaku jika berlaku option salah satu dibawah ini:
+#     --with-end-options-double-dash atau --with-end-options-first-operand
 #   --output-file <n>
 #     Code yang dibuat tidak akan dikirim ke stdout tetapi disimpan sebagai
 #     file.
@@ -579,7 +589,7 @@ CodeGeneratorParseOptions() {
         lines_2+=(                  $original_arguments'=("$@")')
         lines_2+=('')
     fi
-
+    # Start first looping.
     for e in "${csv_all[@]}"
     do
         parseCSV "$e"
@@ -806,7 +816,6 @@ CodeGeneratorParseOptions() {
             lines_6+=(              "$____$____$____""$e")
         done
         lines_6+=(                  "$____$____$____"';;')
-
     else
         if [[ $compact == 1 ]];then
             _add=
@@ -830,7 +839,7 @@ CodeGeneratorParseOptions() {
         lines_6+=(                  'set -- "${'"$new_arguments"'[@]}"')
         lines_6+=('')
     fi
-
+    # Start second looping.
     if [[ $short_option_without_value -gt 1 || $short_option_with_value -gt 0 ]];then
         if [[ ! $clean == 1 ]];then
             lines_7+=(              '# Truncate.')
