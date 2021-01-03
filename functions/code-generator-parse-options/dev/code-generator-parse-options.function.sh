@@ -3,7 +3,7 @@
 #
 # @filename: code-generator-parse-options.function.sh
 # @version: 1.0
-# @release-date: 20201228
+# @release-date: 20210103
 # @author: IjorTengab <ijortengab@gmail.com>
 #
 # Membuat code untuk memparsing options dari argument yang biasanya digunakan
@@ -15,13 +15,17 @@
 #     definition).
 #     CSV (For complex options definition).
 #     ORIGINAL_ARGUMENTS (Default value is `ORIGINAL_ARGUMENTS`)
+#     INDENT (Default value is `    ` four spaces)
 #     _NEW_ARGUMENTS (Default value is `_new_arguments`)
 #     _N (Default value is `_n`)
-#     INDENT (Default value is `    ` four spaces)
 #
 # Arguments:
+#   --clean
+#     Code yang dibuat tidak akan terdapat comment informasi.
 #   --compact
 #     Code akan dibuat seringkas mungkin.
+#   --debug-file <n>
+#     Otomatis membuat file yang berisi print variable untuk keperluan debug.
 #   --no-error-invalid-options
 #     Code tidak akan menghasilkan output ke stderr jika ditemukan options yang
 #     invalid.
@@ -32,7 +36,12 @@
 #     Code tidak akan terdapat hash bang diawal script.
 #   --no-original-arguments
 #     Code tidak akan terdapat definisi original arguments.
-#   --sort
+#   --output-file <n>
+#     Code yang dibuat tidak akan dikirim ke stdout tetapi disimpan sebagai
+#     file.
+#   --path-shell <n>
+#     String path shell diawal baris. Default: `/bin/bash`
+#   --sort <n>
 #     Urutan option saat looping menggunakan while. Pisahkan dengan comma
 #     diantara pilihan berikut: alphabet,type,.
 #     Contoh value adalah sbb:
@@ -45,9 +54,6 @@
 #   --sort-type-flag <n>
 #     Prioritas sort untuk type flag.
 #     <n> adalah integer 1 sampai 9. Default 1.
-#   --sort-type-value <n>
-#     Prioritas sort untuk type value.
-#     <n> adalah integer 1 sampai 9. Default 2.
 #   --sort-type-flag-value <n>
 #     Prioritas sort untuk type flag-value.
 #     <n> adalah integer 1 sampai 9. Default 3.
@@ -57,12 +63,25 @@
 #   --sort-type-multivalue <n>
 #     Prioritas sort untuk type multivalue.
 #     <n> adalah integer 1 sampai 9. Default 5.
+#   --sort-type-value <n>
+#     Prioritas sort untuk type value.
+#     <n> adalah integer 1 sampai 9. Default 2.
+#   --with-end-options-double-dash
+#     Code yang dibuat akan menjadikan double dash sebagai end options.
+#   --without-end-options-double-dash
+#     Code yang dibuat tidak akan menjadikan double dash sebagai end options.
+#   --with-end-options-first-operand
+#     Code yang dibuat akan menjadikan first operand (argument non options)
+#     sebagai end options.
+#   --without-end-options-first-operand
+#     Code yang dibuat tidak akan menjadikan first operand
+#     (argument non options) sebagai end options.
 #
 # Returns:
 #   1: Tidak bisa membuat code karena options yang didefinisikan tidak ada.
 #
 # Output:
-#   Menulis generated code ke stdout
+#   Menulis generated code ke stdout, kecuali terdapat option `--output-file`.
 #
 # Tested in Ubuntu 20.04 bash version:
 # GNU bash, version 4.4.20(1)-release (x86_64-pc-linux-gnu)
@@ -82,9 +101,9 @@ CodeGeneratorParseOptions() {
     local E e i j
 
     # Temporary Variable.
-    local _row _csv
+    local _row _csv _comment
     local _sort _parameter _long_option _short_option _short_option_strlen _type
-    local _alphabet _add _priority _sort_type _case _lines _flag _longest=0
+    local _alphabet _add _priority _sort_type _case _array _flag _longest=0
 
     # Storage hasil mengolah $global.
     local csv_all=()
@@ -112,30 +131,31 @@ CodeGeneratorParseOptions() {
     # Parse options
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --no-hash-bang) no_hash_bang=1; shift ;;
-            --no-original-arguments) no_original_arguments=1; shift ;;
-            --path-shell=*) path_shell="${1#*=}"; shift ;;
-            --path-shell) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then path_shell="$2"; shift; fi; shift ;;
+            --clean) clean=1; shift ;;
             --compact) compact=1; shift ;;
-            --no-error-invalid-options) no_error_invalid_options=1; shift ;;
-            --no-error-require-arguments) no_error_require_arguments=1; shift ;;
-            --sort=*) sort="${1#*=}"; shift ;;
-            --sort) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort="$2" shift; fi; shift ;;
-            --sort-type-flag=*) sort_type_flag="${1#*=}"; shift ;;
-            --sort-type-flag) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_flag="$2" shift; fi; shift ;;
-            --sort-type-value=*) sort_type_value="${1#*=}"; shift ;;
-            --sort-type-value) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_value="$2" shift; fi; shift ;;
-            --sort-type-flag-value=*) sort_type_flag_value="${1#*=}"; shift ;;
-            --sort-type-flag-value) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_flag_value="$2" shift; fi; shift ;;
-            --sort-type-increment=*) sort_type_increment="${1#*=}"; shift ;;
-            --sort-type-increment) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_increment="$2" shift; fi; shift ;;
-            --sort-type-multivalue=*) sort_type_multivalue="${1#*=}"; shift ;;
-            --sort-type-multivalue) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_multivalue="$2" shift; fi; shift ;;
-            --output-file=*) output_file="${1#*=}"; shift ;;
-            --output-file) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then output_file="$2"; shift; fi; shift ;;
             --debug-file=*) debug_file="${1#*=}"; shift ;;
             --debug-file) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then debug_file="$2"; shift; fi; shift ;;
+            --no-error-invalid-options) no_error_invalid_options=1; shift ;;
+            --no-error-require-arguments) no_error_require_arguments=1; shift ;;
+            --no-hash-bang) no_hash_bang=1; shift ;;
+            --no-original-arguments) no_original_arguments=1; shift ;;
             --no-rebuild-arguments) no_rebuild_arguments=1; shift ;;
+            --output-file=*) output_file="${1#*=}"; shift ;;
+            --output-file) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then output_file="$2"; shift; fi; shift ;;
+            --path-shell=*) path_shell="${1#*=}"; shift ;;
+            --path-shell) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then path_shell="$2"; shift; fi; shift ;;
+            --sort=*) sort="${1#*=}"; shift ;;
+            --sort) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort="$2"; shift; fi; shift ;;
+            --sort-type-flag=*) sort_type_flag="${1#*=}"; shift ;;
+            --sort-type-flag) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_flag="$2"; shift; fi; shift ;;
+            --sort-type-flag-value=*) sort_type_flag_value="${1#*=}"; shift ;;
+            --sort-type-flag-value) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_flag_value="$2"; shift; fi; shift ;;
+            --sort-type-increment=*) sort_type_increment="${1#*=}"; shift ;;
+            --sort-type-increment) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_increment="$2"; shift; fi; shift ;;
+            --sort-type-multivalue=*) sort_type_multivalue="${1#*=}"; shift ;;
+            --sort-type-multivalue) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_multivalue="$2"; shift; fi; shift ;;
+            --sort-type-value=*) sort_type_value="${1#*=}"; shift ;;
+            --sort-type-value) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then sort_type_value="$2"; shift; fi; shift ;;
             --with-end-options-double-dash) end_options_double_dash=1; shift ;;
             --without-end-options-double-dash) end_options_double_dash=0; shift ;;
             --with-end-options-first-operand) end_options_first_operand=1; shift ;;
@@ -375,6 +395,19 @@ CodeGeneratorParseOptions() {
         _case=$(printf "%s" "${_case[@]/#/|}" | cut -c2-)
     }
 
+    # Menggabungkan seluruh array `lines_n` menjadi satu string panjang `lines`.
+    #
+    # Globals:
+    #   Used: lines_1 lines_2 lines_3 lines_4 lines_5 lines_6 lines_7 lines_8
+    #         lines_9
+    #   Modified: lines
+    #
+    # Arguments:
+    #   None
+    #
+    # Returns:
+    #   None
+    #
     compileLines() {
         for e in "${lines_1[@]}"; do lines+="$e""
 "; done
@@ -396,6 +429,20 @@ CodeGeneratorParseOptions() {
 "; done
     }
 
+    # Menghapus value dari parameter lines dan lines_n.
+    #
+    # Globals:
+    #   Used: lines lines_1 lines_2 lines_3 lines_4 lines_5 lines_6 lines_7
+    #         lines_8 lines_9
+    #   Modified: lines lines_1 lines_2 lines_3 lines_4 lines_5 lines_6 lines_7
+    #             lines_8 lines_9
+    #
+    # Arguments:
+    #   None
+    #
+    # Returns:
+    #   None
+    #
     resetLines() {
         lines=; lines_1=(); lines_2=(); lines_3=(); lines_4=()
         lines_5=(); lines_6=(); lines_7=(); lines_8=(); lines_9=()
@@ -526,7 +573,9 @@ CodeGeneratorParseOptions() {
         lines_1+=('')
     fi
     if [[ ! $no_original_arguments == 1 ]];then
-        lines_2+=(                  '# Original arguments.')
+        if [[ ! $clean == 1 ]];then
+            lines_2+=(              '# Original arguments.')
+        fi
         lines_2+=(                  $original_arguments'=("$@")')
         lines_2+=('')
     fi
@@ -560,13 +609,23 @@ CodeGeneratorParseOptions() {
                     ;;
             esac
         fi
+        if [[ $compact == 1 ]];then
+            if [[ $clean == 1 ]];then
+                _comment=
+            else
+                _comment=' # '$_type
+            fi
+        else
+            if [[ ! $clean == 1 ]];then
+                lines_5+=(          "$____$____"'# '$_type)
+            fi
+        fi
         case "$_type" in
             flag)
                 populateCase
                 if [[ $compact == 1 ]];then
-                    lines_5+=(      "$____$____"$_case') '$_parameter'='$_flag'; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') '$_parameter'='$_flag'; shift ;;'"$_comment")
                 else
-                    lines_5+=(      "$____$____"'# '$_type)
                     lines_5+=(      "$____$____"$_case')')
                     lines_5+=(      "$____$____$____"$_parameter'='$_flag)
                     lines_5+=(      "$____$____$____"'shift')
@@ -576,9 +635,8 @@ CodeGeneratorParseOptions() {
             value)
                 populateCase '=*'
                 if [[ $compact == 1 ]];then
-                    lines_5+=(      "$____$____"$_case') '$_parameter'="${1#*=}"; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') '$_parameter'="${1#*=}"; shift ;;'"$_comment")
                 else
-                    lines_5+=(      "$____$____"'# '$_type)
                     lines_5+=(      "$____$____"$_case')')
                     lines_5+=(      "$____$____$____"$_parameter'="${1#*=}"')
                     lines_5+=(      "$____$____$____"'shift')
@@ -590,7 +648,7 @@ CodeGeneratorParseOptions() {
                     if [[ $no_error_require_arguments == 1 ]];then
                         _add=
                     fi
-                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'="$2"; shift'"$_add"'; fi; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'="$2"; shift'"$_add"'; fi; shift ;;'"$_comment")
                 else
                     lines_5+=(      "$____$____"$_case')')
                     lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then')
@@ -608,9 +666,8 @@ CodeGeneratorParseOptions() {
             flag_value)
                 populateCase '=*'
                 if [[ $compact == 1 ]];then
-                    lines_5+=(      "$____$____"$_case') '$_parameter'="${1#*=}"; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') '$_parameter'="${1#*=}"; shift ;;'"$_comment")
                 else
-                    lines_5+=(      "$____$____"'# '$_type)
                     lines_5+=(      "$____$____"$_case')')
                     lines_5+=(      "$____$____$____"$_parameter'="${1#*=}"')
                     lines_5+=(      "$____$____$____"'shift')
@@ -618,7 +675,7 @@ CodeGeneratorParseOptions() {
                 fi
                 populateCase
                 if [[ $compact == 1 ]];then
-                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'="$2"; shift; else '$_parameter'='$_flag'; fi; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'="$2"; shift; else '$_parameter'='$_flag'; fi; shift ;;'"$_comment")
                 else
                     lines_5+=(      "$____$____"$_case')')
                     lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then')
@@ -634,9 +691,8 @@ CodeGeneratorParseOptions() {
             increment)
                 populateCase
                 if [[ $compact == 1 ]];then
-                    lines_5+=(      "$____$____"$_case') '$_parameter'="$(('$_parameter'+1))"; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') '$_parameter'="$(('$_parameter'+1))"; shift ;;'"$_comment")
                 else
-                    lines_5+=(      "$____$____"'# '$_type)
                     lines_5+=(      "$____$____"$_case')')
                     lines_5+=(      "$____$____$____"$_parameter'="$(('$parameter'+1))"')
                     lines_5+=(      "$____$____$____"'shift')
@@ -646,9 +702,8 @@ CodeGeneratorParseOptions() {
             multivalue)
                 populateCase '=*'
                 if [[ $compact == 1 ]];then
-                    lines_5+=(      "$____$____"$_case') '$_parameter'+=("${1#*=}"); shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') '$_parameter'+=("${1#*=}"); shift ;;'"$_comment")
                 else
-                    lines_5+=(      "$____$____"'# '$_type)
                     lines_5+=(      "$____$____"$_case')')
                     lines_5+=(      "$____$____$____"$_parameter'+=("${1#*=}")')
                     lines_5+=(      "$____$____$____"'shift')
@@ -660,7 +715,7 @@ CodeGeneratorParseOptions() {
                     if [[ $no_error_require_arguments == 1 ]];then
                         _add=
                     fi
-                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'+=("$2"); shift'"$_add"'; fi; shift ;; # '$_type)
+                    lines_5+=(      "$____$____"$_case') if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then '$_parameter'+=("$2"); shift'"$_add"'; fi; shift ;;'"$_comment")
                 else
                     lines_5+=(      "$____$____"$_case')')
                     lines_5+=(      "$____$____$____"'if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then')
@@ -690,25 +745,27 @@ CodeGeneratorParseOptions() {
     if [[ $print_new_arguments == 1 ]];then
         temporary_variable+=(       "$new_arguments"'=()')
     fi
-    lines_4+=(                      '# Processing standalone options.')
+    if [[ ! $clean == 1 ]];then
+        lines_4+=(                  '# Processing standalone options.')
+    fi
     lines_4+=(                      'while [[ $# -gt 0 ]]; do')
     lines_4+=(                      "$____"'case "$1" in')
     # Prepare repeat code.
     if [[ $end_options_double_dash == 1 || $end_options_first_operand == 1 ]];then
         # Karena print_new_arguments=1, maka tambahkan langsung new_arguments.
-        _lines=()
-        _lines+=(                   'while [[ $# -gt 0 ]]; do')
-        _lines+=(                   "$____"'case "$1" in')
+        _array=()
+        _array+=(                   'while [[ $# -gt 0 ]]; do')
+        _array+=(                   "$____"'case "$1" in')
         if [[ $compact == 1 ]];then
-            _lines+=(               "$____$____"'*) '"$new_arguments"'+=("$1"); shift ;;')
+            _array+=(               "$____$____"'*) '"$new_arguments"'+=("$1"); shift ;;')
         else
-            _lines+=(               "$____$____"'*)')
-            _lines+=(               "$____$____$____""$new_arguments"'+=("$1")')
-            _lines+=(               "$____$____$____"'shift')
-            _lines+=(               "$____$____$____"';;')
+            _array+=(               "$____$____"'*)')
+            _array+=(               "$____$____$____""$new_arguments"'+=("$1")')
+            _array+=(               "$____$____$____"'shift')
+            _array+=(               "$____$____$____"';;')
         fi
-        _lines+=(                   "$____"'esac')
-        _lines+=(                   'done')
+        _array+=(                   "$____"'esac')
+        _array+=(                   'done')
     fi
     # Double dash.
     if [[ $end_options_double_dash == 1 ]];then
@@ -724,7 +781,7 @@ CodeGeneratorParseOptions() {
                 lines_6+=(          "$____$____$____"'shift')
             fi
         fi
-        for e in "${_lines[@]}"
+        for e in "${_array[@]}"
         do
             lines_6+=(              "$____$____$____""$e")
         done
@@ -744,7 +801,7 @@ CodeGeneratorParseOptions() {
     # Asterix.
     if [[  $end_options_first_operand == 1 ]];then
         lines_6+=(                  "$____$____"'*)')
-        for e in "${_lines[@]}"
+        for e in "${_array[@]}"
         do
             lines_6+=(              "$____$____$____""$e")
         done
@@ -775,10 +832,14 @@ CodeGeneratorParseOptions() {
     fi
 
     if [[ $short_option_without_value -gt 1 || $short_option_with_value -gt 0 ]];then
-        lines_7+=(                  '# Truncate.')
+        if [[ ! $clean == 1 ]];then
+            lines_7+=(              '# Truncate.')
+        fi
         lines_7+=(                  "$new_arguments"'=()')
         lines_7+=('')
-        lines_7+=(                  '# Processing compiled single character options.')
+        if [[ ! $clean == 1 ]];then
+            lines_7+=(              '# Processing compiled single character options.')
+        fi
         lines_7+=(                  'while [[ $# -gt 0 ]]; do')
         lines_7+=(                  "$____"'case "$1" in')
         if [[ $compact == 1 ]];then
@@ -799,7 +860,7 @@ CodeGeneratorParseOptions() {
         lines_9+=(                  "$____$____$____"'shift "$((OPTIND-1))"')
         if [[ $end_options_double_dash == 1 ]];then
             lines_9+=(              "$____$____$____"'if [[ "$'"$n"'" == '"'"'--'"'"' ]];then')
-            for e in "${_lines[@]}"
+            for e in "${_array[@]}"
             do
                 lines_9+=(          "$____$____$____$____""$e")
             done
@@ -814,7 +875,7 @@ CodeGeneratorParseOptions() {
                 lines_9+=(          "$____$____"'--)')
                 lines_9+=(          "$____$____$____"'shift')
             fi
-            for e in "${_lines[@]}"
+            for e in "${_array[@]}"
             do
                 lines_9+=(          "$____$____$____""$e")
             done
@@ -823,7 +884,7 @@ CodeGeneratorParseOptions() {
         # Asterix.
         if [[  $end_options_first_operand == 1 ]];then
             lines_9+=(              "$____$____"'*)')
-            for e in "${_lines[@]}"
+            for e in "${_array[@]}"
             do
                 lines_9+=(          "$____$____$____""$e")
             done
@@ -865,11 +926,22 @@ CodeGeneratorParseOptions() {
                     ;;
             esac
             if [[ $compact == 1 ]];then
-                lines_8+=(          "$____$____$____$____$____"$_alphabet')'' '$_add' ;; # '$_type)
+                if [[ $clean == 1 ]];then
+                    _comment=
+                else
+                    _comment=' # '$_type
+                fi
             else
-                lines_8+=(          "$____$____$____$____$____"'# '$_type)
+                if [[ ! $clean == 1 ]];then
+                    lines_8+=(      "$____$____$____$____$____"'# '$_type)
+                fi
+            fi
+            if [[ $compact == 1 ]];then
+                lines_8+=(          "$____$____$____$____$____"$_alphabet')'' '"$_add"' ;;'"$_comment")
+            else
+
                 lines_8+=(          "$____$____$____$____$____"$_alphabet')')
-                lines_8+=(          "$____$____$____$____$____$____"$_add)
+                lines_8+=(          "$____$____$____$____$____$____""$_add")
                 lines_8+=(          "$____$____$____$____$____$____"';;')
             fi
         done
@@ -884,20 +956,20 @@ CodeGeneratorParseOptions() {
             fi
         fi
         if [[ ${#csv_short_option_strlen_1_flag_value[@]} -gt 0 ]];then
-            _lines=()
-            _lines+=(               'case $OPTARG in')
+            _array=()
+            _array+=(               'case $OPTARG in')
             for e in "${csv_short_option_strlen_1_flag_value[@]}"; do
                 parseCSV "$e"
                 _alphabet=${_short_option//-/}
                 if [[ $compact == 1 ]];then
-                    _lines+=(       "$____"$_alphabet') '$_parameter'='$_flag' ;;')
+                    _array+=(       "$____"$_alphabet') '$_parameter'='$_flag' ;;')
                 else
-                    _lines+=(       "$____"$_alphabet')')
-                    _lines+=(       "$____$____"$_parameter'='$_flag)
-                    _lines+=(       "$____$____"';;')
+                    _array+=(       "$____"$_alphabet')')
+                    _array+=(       "$____$____"$_parameter'='$_flag)
+                    _array+=(       "$____$____"';;')
                 fi
             done
-            _lines+=(               'esac')
+            _array+=(               'esac')
         fi
         # Colon.
         if [[ ${#csv_short_option_strlen_1_flag_value[@]} -gt 0 ]];then
@@ -913,7 +985,7 @@ CodeGeneratorParseOptions() {
                 fi
                 lines_8+=(          "$____$____$____$____$____$____"'else')
             fi
-            for e in "${_lines[@]}"
+            for e in "${_array[@]}"
             do
                 lines_8+=(          "$_add$____$____$____$____$____$____""$e")
             done
@@ -926,7 +998,9 @@ CodeGeneratorParseOptions() {
         fi
     fi
     if [[ ${#temporary_variable[@]} -gt 0 ]];then
-        lines_3+=(                  '# Temporary variable.')
+        if [[ ! $clean == 1 ]];then
+            lines_3+=(              '# Temporary variable.')
+        fi
         for e in "${temporary_variable[@]}"
         do
             lines_3+=(              "$e")
@@ -934,8 +1008,9 @@ CodeGeneratorParseOptions() {
         done
         lines_3+=('')
     fi
-    lines_9+=('# End of generated code by CodeGeneratorParseOptions().')
-
+    if [[ ! $clean == 1 ]];then
+        lines_9+=(                  '# End of generated code by CodeGeneratorParseOptions().')
+    fi
     # Output.
     compileLines
     if [[ ! $output_file == '' ]];then
@@ -947,14 +1022,21 @@ CodeGeneratorParseOptions() {
         resetLines
         lines_1+=(                  '#!'"$path_shell")
         lines_1+=('')
-        lines_2+=(                  '# Options')
+        lines_1+=(                  'normal="$(tput sgr0)"')
+        lines_1+=(                  'red="$(tput setaf 1)"')
+        lines_1+=(                  'yellow="$(tput setaf 3)"')
+        lines_1+=(                  'cyan="$(tput setaf 6)"')
+        lines_1+=(                  'magenta="$(tput setaf 5)"')
+        lines_1+=('')
         lines_2+=(                  'echo')
-        lines_2+=(                  "echo '# Options'")
+        lines_2+=(                  'echo ${yellow}'"'# Options'"'${normal}')
         lines_2+=(                  'echo')
         for e in "${csv_all[@]}"
         do
             parseCSV "$e"
             _add=
+            _array=($_short_option $_long_option)
+            _comment="# "$(printf "%s" "${_array[@]/#/, }" | cut -c3-)
             for (( i=0; i < (( ${_longest} - ${#_parameter} )) ; i++ )); do
                 _add+="."
             done
@@ -968,36 +1050,35 @@ CodeGeneratorParseOptions() {
                 multivalue)
                     lines_5+=(      '# multivalue')
                     lines_5+=(      'echo -n \')
-                    lines_5+=(      '     \$'$_parameter'"'"$_add"'"= '"'( '")
+                    lines_5+=(      '     ${cyan}\$'$_parameter'${normal}"'"$_add"'= "'"'( '")
                     lines_5+=(      'for e in "${'$_parameter'[@]}"')
                     lines_5+=(      'do')
                     lines_5+=(      '    if [[ $e =~ " " ]];then')
-                    lines_5+=(      '        echo -n "\"$e\""'"' '")
+                    lines_5+=(      '        echo -n '"'\"'"'${magenta}"$e"${normal}'"'\"'' '")
                     lines_5+=(      '    else')
-                    lines_5+=(      '        echo -n "$e"'"' '")
+                    lines_5+=(      '        echo -n ${magenta}"$e"${normal}'"' '")
                     lines_5+=(      '    fi')
                     lines_5+=(      'done')
-                    lines_5+=(      "echo ')'")
+                    lines_5+=(      "echo ')'"'${normal}${red}" # '"$_comment"'"${normal}')
                     ;;
                 *)
-                    lines_5+=(      "echo "'\$'$_parameter'"'"$_add"'"= $'$_parameter)
+                    lines_5+=(      "echo "'${cyan}\$'$_parameter'${normal}"'"$_add"'= "${magenta}$'$_parameter'${normal}${red}" '"$_comment"'"${normal}')
                     ;;
             esac
         done
         lines_5+=('')
-        lines_6+=(                  '# Mass Arguments')
         lines_6+=(                  'echo')
-        lines_6+=(                  "echo '# Mass Arguments'")
+        lines_6+=(                  "echo \${yellow}'# New Arguments (Operand)'\${normal}")
         lines_6+=(                  'echo')
-        lines_6+=(                  'echo \$1 = $1')
-        lines_6+=(                  'echo \$2 = $2')
-        lines_6+=(                  'echo \$3 = $3')
-        lines_6+=(                  'echo \$4 = $4')
-        lines_6+=(                  'echo \$5 = $5')
-        lines_6+=(                  'echo \$6 = $6')
-        lines_6+=(                  'echo \$7 = $7')
-        lines_6+=(                  'echo \$8 = $8')
-        lines_6+=(                  'echo \$9 = $9')
+        lines_6+=(                  'echo ${cyan}\$1${normal} = ${magenta}$1${normal}')
+        lines_6+=(                  'echo ${cyan}\$2${normal} = ${magenta}$2${normal}')
+        lines_6+=(                  'echo ${cyan}\$3${normal} = ${magenta}$3${normal}')
+        lines_6+=(                  'echo ${cyan}\$4${normal} = ${magenta}$4${normal}')
+        lines_6+=(                  'echo ${cyan}\$5${normal} = ${magenta}$5${normal}')
+        lines_6+=(                  'echo ${cyan}\$6${normal} = ${magenta}$6${normal}')
+        lines_6+=(                  'echo ${cyan}\$7${normal} = ${magenta}$7${normal}')
+        lines_6+=(                  'echo ${cyan}\$8${normal} = ${magenta}$8${normal}')
+        lines_6+=(                  'echo ${cyan}\$9${normal} = ${magenta}$9${normal}')
         compileLines
         echo -n "$lines" > $debug_file
     fi
