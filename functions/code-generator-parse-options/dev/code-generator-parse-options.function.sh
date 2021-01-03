@@ -138,6 +138,8 @@ CodeGeneratorParseOptions() {
             --no-rebuild-arguments) no_rebuild_arguments=1; shift ;;
             --with-end-options-double-dash) end_options_double_dash=1; shift ;;
             --without-end-options-double-dash) end_options_double_dash=0; shift ;;
+            --with-end-options-first-operand) end_options_first_operand=1; shift ;;
+            --without-end-options-first-operand) end_options_first_operand=0; shift ;;
             *) shift ;;
         esac
     done
@@ -682,7 +684,7 @@ CodeGeneratorParseOptions() {
     if [[ $short_option_without_value -gt 1 || $short_option_with_value -gt 0 ]];then
         print_new_arguments=1
     fi
-    if [[ $end_options_double_dash == 1 ]];then
+    if [[ $end_options_double_dash == 1 || $end_options_first_operand == 1 ]];then
         print_new_arguments=1
     fi
     if [[ $print_new_arguments == 1 ]];then
@@ -692,7 +694,7 @@ CodeGeneratorParseOptions() {
     lines_4+=(                      'while [[ $# -gt 0 ]]; do')
     lines_4+=(                      "$____"'case "$1" in')
     # Prepare repeat code.
-    if [[ $end_options_double_dash == 1 ]];then
+    if [[ $end_options_double_dash == 1 || $end_options_first_operand == 1 ]];then
         # Karena print_new_arguments=1, maka tambahkan langsung new_arguments.
         _lines=()
         _lines+=(                   'while [[ $# -gt 0 ]]; do')
@@ -740,19 +742,29 @@ CodeGeneratorParseOptions() {
         fi
     fi
     # Asterix.
-    if [[ $compact == 1 ]];then
-        _add=
-        if [[ $print_new_arguments == 1 ]];then
-            _add=' '"$new_arguments"'+=("$1");'
-        fi
-        lines_6+=(                  "$____$____"'*)'"$_add"' shift ;;')
-    else
+    if [[  $end_options_first_operand == 1 ]];then
         lines_6+=(                  "$____$____"'*)')
-        if [[ $print_new_arguments == 1 ]];then
-            lines_6+=(              "$____$____$____""$new_arguments"'+=("$1")')
-        fi
-        lines_6+=(                  "$____$____$____"'shift')
+        for e in "${_lines[@]}"
+        do
+            lines_6+=(              "$____$____$____""$e")
+        done
         lines_6+=(                  "$____$____$____"';;')
+
+    else
+        if [[ $compact == 1 ]];then
+            _add=
+            if [[ $print_new_arguments == 1 ]];then
+                _add=' '"$new_arguments"'+=("$1");'
+            fi
+            lines_6+=(              "$____$____"'*)'"$_add"' shift ;;')
+        else
+            lines_6+=(              "$____$____"'*)')
+            if [[ $print_new_arguments == 1 ]];then
+                lines_6+=(          "$____$____$____""$new_arguments"'+=("$1")')
+            fi
+            lines_6+=(              "$____$____$____"'shift')
+            lines_6+=(              "$____$____$____"';;')
+        fi
     fi
     lines_6+=(                      "$____"'esac')
     lines_6+=(                      'done')
@@ -809,13 +821,22 @@ CodeGeneratorParseOptions() {
             lines_9+=(              "$____$____$____"';;')
         fi
         # Asterix.
-        if [[ $compact == 1 ]];then
-            lines_9+=(              "$____$____"'*) '"$new_arguments"'+=("$1"); shift ;;')
-        else
+        if [[  $end_options_first_operand == 1 ]];then
             lines_9+=(              "$____$____"'*)')
-            lines_9+=(              "$____$____$____""$new_arguments"'+=("$1")')
-            lines_9+=(              "$____$____$____"'shift')
+            for e in "${_lines[@]}"
+            do
+                lines_9+=(          "$____$____$____""$e")
+            done
             lines_9+=(              "$____$____$____"';;')
+        else
+            if [[ $compact == 1 ]];then
+                lines_9+=(          "$____$____"'*) '"$new_arguments"'+=("$1"); shift ;;')
+            else
+                lines_9+=(          "$____$____"'*)')
+                lines_9+=(          "$____$____$____""$new_arguments"'+=("$1")')
+                lines_9+=(          "$____$____$____"'shift')
+                lines_9+=(          "$____$____$____"';;')
+            fi
         fi
         lines_9+=(                  "$____"'esac')
         lines_9+=(                  'done')
@@ -904,7 +925,6 @@ CodeGeneratorParseOptions() {
             lines_8+=(              "$____$____$____$____$____"':) echo "Option -$OPTARG requires an argument." >&2 ;;')
         fi
     fi
-
     if [[ ${#temporary_variable[@]} -gt 0 ]];then
         lines_3+=(                  '# Temporary variable.')
         for e in "${temporary_variable[@]}"
@@ -913,8 +933,8 @@ CodeGeneratorParseOptions() {
             lines_9+=(                  'unset '"${e%=*}")
         done
         lines_3+=('')
-        lines_9+=('')
     fi
+    lines_9+=('# End of generated code by CodeGeneratorParseOptions().')
 
     # Output.
     compileLines
