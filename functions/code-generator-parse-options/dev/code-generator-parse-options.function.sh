@@ -712,7 +712,7 @@ CodeGeneratorParseOptions() {
                     lines_5+=(      "$____$____"$_case') '$_parameter'="$(('$_parameter'+1))"; shift ;;'"$_comment")
                 else
                     lines_5+=(      "$____$____"$_case')')
-                    lines_5+=(      "$____$____$____"$_parameter'="$(('$parameter'+1))"')
+                    lines_5+=(      "$____$____$____"$_parameter'="$(('$_parameter'+1))"')
                     lines_5+=(      "$____$____$____"'shift')
                     lines_5+=(      "$____$____$____"';;')
                 fi
