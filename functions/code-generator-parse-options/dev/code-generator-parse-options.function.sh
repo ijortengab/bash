@@ -113,7 +113,7 @@ CodeGeneratorParseOptions() {
     # Temporary Variable.
     local _row _csv _comment
     local _sort _parameter _long_option _short_option _short_option_strlen _type
-    local _alphabet _add _priority _sort_type _case _array _flag _longest=0
+    local _alphabet _add _priority _sort_type _case _array _flag _line
 
     # Storage hasil mengolah $global.
     local csv_all=()
@@ -124,6 +124,7 @@ CodeGeneratorParseOptions() {
     local short_option_with_value=0
     local short_option_without_value=0
     local temporary_variable=()
+    local longest=0 longest2=0
 
     local lines= lines_1=() lines_2=() lines_3=() lines_4=()
     local lines_5=() lines_6=() lines_7=() lines_8=() lines_9=()
@@ -536,8 +537,15 @@ CodeGeneratorParseOptions() {
                 else
                     _parameter=$(buildParameter "$_short_option")
                 fi
-                if [[ ${#_parameter} -gt $_longest ]];then
-                    _longest=${#_parameter}
+                if [[ ${#_parameter} -gt $longest ]];then
+                    longest=${#_parameter}
+                fi
+                i=$((${#_short_option}+${#_long_option}))
+                if [[ ! $_long_option == '' && ! $_short_option == '' ]];then
+                    i=$(($i+2)) # Dua merupakan koma dan spasi.
+                fi
+                if [[ $i -gt $longest2 ]];then
+                    longest2=$i
                 fi
             fi
             # Populate _sort.
@@ -931,7 +939,7 @@ CodeGeneratorParseOptions() {
                     _add=$_parameter'="$(('$_parameter'+1))"'
                     ;;
                 multivalue)
-                    _add=$_parameter'=("$OPTARG")'
+                    _add=$_parameter'+=("$OPTARG")'
                     ;;
             esac
             if [[ $compact == 1 ]];then
@@ -1043,35 +1051,32 @@ CodeGeneratorParseOptions() {
         for e in "${csv_all[@]}"
         do
             parseCSV "$e"
-            _add=
+            case $_type in
+                multivalue) _line='echo -n' ;;
+                *) _line='echo'"   " ;;
+            esac
             _array=($_short_option $_long_option)
-            _comment="# "$(printf "%s" "${_array[@]/#/, }" | cut -c3-)
-            for (( i=0; i < (( ${_longest} - ${#_parameter} )) ; i++ )); do
-                _add+="."
-            done
-            _add=" "$_add" "
-            if [[ $_add == " . " ]];then
-                _add="   "
-            elif [[ $_add == " .. " ]];then
-                _add="    "
-            fi
+            _add=$(printf "%s" "${_array[@]/#/, }" | cut -c3-)
+            j=
+            for (( i=0; i < (( ${longest2} - ${#_add} )) ; i++ )); do j+="."; done
+            j=" "$j" "
+            if [[ $j == " . " ]];then j="   "; elif [[ $j == " .. " ]];then j="    "; fi
+            _line+=' ${red}'"$_add"'${normal}"'"$j"'"${cyan}\$'"$_parameter"'${normal}'
+            j=
+            for (( i=0; i < (( ${longest} - ${#_parameter} )) ; i++ )); do j+="."; done
+            j=" "$j" "
+            if [[ $j == " . " ]];then j="   "; elif [[ $j == " .. " ]];then j="    "; fi
+            _line+='"'"$j"'= "'
             case $_type in
                 multivalue)
-                    lines_5+=(      '# multivalue')
-                    lines_5+=(      'echo -n \')
-                    lines_5+=(      '     ${cyan}\$'$_parameter'${normal}"'"$_add"'= "'"'( '")
-                    lines_5+=(      'for e in "${'$_parameter'[@]}"')
-                    lines_5+=(      'do')
-                    lines_5+=(      '    if [[ $e =~ " " ]];then')
-                    lines_5+=(      '        echo -n '"'\"'"'${magenta}"$e"${normal}'"'\"'' '")
-                    lines_5+=(      '    else')
-                    lines_5+=(      '        echo -n ${magenta}"$e"${normal}'"' '")
-                    lines_5+=(      '    fi')
-                    lines_5+=(      'done')
-                    lines_5+=(      "echo ')'"'${normal}${red}" # '"$_comment"'"${normal}')
+                    _line+='"( "'
+                    lines_5+=(      "$_line")
+                    lines_5+=(            'for _e_ in "${'"$_parameter"'[@]}"; do if [[ $_e_ =~ " " ]];then echo -n \"${magenta}"$_e_"${normal}\"" ";else echo -n ${magenta}"$_e_"${normal}" ";fi;done')
+                    lines_5+=(      'echo ")"')
                     ;;
                 *)
-                    lines_5+=(      "echo "'${cyan}\$'$_parameter'${normal}"'"$_add"'= "${magenta}$'$_parameter'${normal}${red}" '"$_comment"'"${normal}')
+                    _line+='${magenta}$'"$_parameter"'${normal}'
+                    lines_5+=(      "$_line")
                     ;;
             esac
         done
