@@ -1,4 +1,4 @@
-# Code Generator for Parsing Options in Command Line Arguments.
+# Code Generator for Parsing Options in Command Line Arguments
 
 Attention:
 
@@ -113,7 +113,7 @@ done
 
 **You can embed that generated code into your shell script at the beginning**.
 
-Navigate to `example-wget` directory to learn more deeply.
+Navigate to `example-wget` and `example-ssh` directory to learn more deeply.
 
 # Reference
 
