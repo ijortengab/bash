@@ -9,27 +9,18 @@ magenta="$(tput setaf 5)"
 echo
 echo ${yellow}'# Options'${normal}
 echo
-echo ${cyan}\$help${normal}" ............... = "${magenta}$help${normal}${red}" # -h, --help"${normal}
-echo ${cyan}\$version${normal}" ............ = "${magenta}$version${normal}${red}" # -V, --version"${normal}
-echo ${cyan}\$append_output${normal}" ...... = "${magenta}$append_output${normal}${red}" # -a, --append-output"${normal}
-echo ${cyan}\$background${normal}" ......... = "${magenta}$background${normal}${red}" # -b, --background"${normal}
-echo ${cyan}\$debug${normal}" .............. = "${magenta}$debug${normal}${red}" # -d, --debug"${normal}
-# multivalue
-echo -n \
-     ${cyan}\$execute${normal}" ............ = "'( '
-for e in "${execute[@]}"
-do
-    if [[ $e =~ " " ]];then
-        echo -n '"'${magenta}"$e"${normal}'"'' '
-    else
-        echo -n ${magenta}"$e"${normal}' '
-    fi
-done
-echo ')'${normal}${red}" # # -e, --execute"${normal}
-echo ${cyan}\$no_host_directories${normal}"  = "${magenta}$no_host_directories${normal}${red}" # -nH, --no-host-directories"${normal}
-echo ${cyan}\$output_document${normal}" .... = "${magenta}$output_document${normal}${red}" # -O, --output-document"${normal}
-echo ${cyan}\$output_file${normal}" ........ = "${magenta}$output_file${normal}${red}" # -o, --output-file"${normal}
-echo ${cyan}\$quiet${normal}" .............. = "${magenta}$quiet${normal}${red}" # -q, --quiet"${normal}
+echo    ${red}-h, --help${normal}" ................ "${cyan}\$help${normal}" ............... = "${magenta}$help${normal}
+echo    ${red}-V, --version${normal}" ............. "${cyan}\$version${normal}" ............ = "${magenta}$version${normal}
+echo    ${red}-a, --append-output${normal}" ....... "${cyan}\$append_output${normal}" ...... = "${magenta}$append_output${normal}
+echo    ${red}-b, --background${normal}" .......... "${cyan}\$background${normal}" ......... = "${magenta}$background${normal}
+echo    ${red}-d, --debug${normal}" ............... "${cyan}\$debug${normal}" .............. = "${magenta}$debug${normal}
+echo -n ${red}-e, --execute${normal}" ............. "${cyan}\$execute${normal}" ............ = ""( "
+for _e_ in "${execute[@]}"; do if [[ $_e_ =~ " " ]];then echo -n \"${magenta}"$_e_"${normal}\"" ";else echo -n ${magenta}"$_e_"${normal}" ";fi;done
+echo ")"
+echo    ${red}-nH, --no-host-directories${normal}"  "${cyan}\$no_host_directories${normal}"  = "${magenta}$no_host_directories${normal}
+echo    ${red}-O, --output-document${normal}" ..... "${cyan}\$output_document${normal}" .... = "${magenta}$output_document${normal}
+echo    ${red}-o, --output-file${normal}" ......... "${cyan}\$output_file${normal}" ........ = "${magenta}$output_file${normal}
+echo    ${red}-q, --quiet${normal}" ............... "${cyan}\$quiet${normal}" .............. = "${magenta}$quiet${normal}
 
 echo
 echo ${yellow}'# New Arguments (Operand)'${normal}
