@@ -33,7 +33,7 @@ FLAG=(
 )
 ```
 
-Use global variable `VALUE`, if you wamts to collect any string. Thiw options
+Use global variable `VALUE`, if you wants to collect any string. This options
 is required value. Example:
 
 ```
@@ -43,7 +43,7 @@ VALUE=(
 )
 ```
 
-Use global variable `$FLAG_VALUE`, if you wamts to collect any string. Thiw
+Use global variable `FLAG_VALUE`, if you wants to collect any string. This
 options is not required. If value omitted, default is boolean `1`. Example:
 
 ```
@@ -52,19 +52,19 @@ FLAG_VALUE=(
 )
 ```
 
-Later, you can using options like this:
+Later, you can use options like this:
 
 ```
-yourscript.sh --with-ssl
+script.sh --with-ssl
 ```
 
-or,
+or this:
 
 ```
-yourscript.sh --with-ssl=openssl
+script.sh --with-ssl=openssl
 ```
 
-Use global variable `MULTIVALUE`, if you wants to collect array of value. Thiw
+Use global variable `MULTIVALUE`, if you wants to collect array of value. This
 options is required value. Example:
 
 ```
@@ -74,7 +74,7 @@ MULTIVALUE=(
 ```
 
 Use global variable `INCREMENT`, if you wants to set integer that increasing if
-the optios is set more than one. Example:
+the options is set more than one. Example:
 
 ```
 INCREMENT=(
@@ -82,10 +82,10 @@ INCREMENT=(
 )
 ```
 
-Five global variable above will be crete variable with parameter same as
-parameter of options which dash will replace by underscore and trim the dash.
-Long options with two dash will be first candidate of parameter name, then short
-option for the next.  Example:
+Five global variable above will be made variable with the same parameter as the
+option parameter which is replace all hyphen by the underscore and then trim
+parameter from the underscore. Long options with two hyphens will be first
+candidate as parameter name, then short option for the next one. Example:
 
 - `--verbose|-v` will have parameter `verbose`.
 - `--output|-o` will have parameter `output`.
@@ -146,6 +146,7 @@ For complex options definitions: `CSV`
 
 ## Options.
 
+```
 --clean
     The generated code doesn't include any comment.
 --compact
@@ -159,54 +160,54 @@ For complex options definitions: `CSV`
 --no-hash-bang
     The generated code not include hash bang (`#!/bin/bash`)
 --no-original-arguments
-    Code tidak akan terdapat definisi original arguments.
+    The generated code doesn't create a definition of original arguments.
 --no-rebuild-arguments
-    Code tidak akan melakukan reposisi arguments (set -- ${array[@]})
-    Gunakan jika script memang tidak terdapat operand (arguments non option)
-    atau keseluruhan options adalah standalone.
-    Option ini tidak berlaku jika terjadi looping kedua dengan getopts, yakni
-    terdapat satu shortoption single character type yg butuh value (value,
-    flag_value, multivalue) atau terdapat minimal dua shortoption single
-    character yang tidak butuh value (flag, flag_value, increment).
-    Option ini juga tidak berlaku jika berlaku option salah satu dibawah ini:
-    --with-end-options-double-dash atau --with-end-options-first-operand
+    The generated code doesn't create a reposition arguments. (set -- ${array[@]})
+    Use it if your script doesn't need operands (arguments non option) or the
+    entire options are standalone.
+    This option does not apply in case of a second loop with getopts, ie
+    there is a single character type short option that needs value (value,
+    flag_value, multivalue) or there are at least two single short options
+    characters that don't need a value (flag, flag_value, increment).
+    This option also does not apply if one of the following options applies:
+     --with-end-options-double-dash or --with-end-options-first-operand
 --output-file <n>
-    Code yang dibuat tidak akan dikirim ke stdout tetapi disimpan sebagai
-    file.
+    The generated code is not sent to stdout but is saved as files.
 --path-shell <n>
-    String path shell diawal baris. Default: `/bin/bash`
+    Shell path string at the beginning of the line. Default: /bin/bash
 --sort <n>
-    Urutan option saat looping menggunakan while. Pisahkan dengan comma
-    diantara pilihan berikut: alphabet,type,.
-    Contoh value adalah sbb:
+    Order of options when looping using while. Separate with commas among the
+    following options: alphabet,type.
+    Examples of values are as follows:
     - alphabet,type
     - type,alphabet
     - type,priority,alphabet
     - type
     - priority,type,alphabet (default)
-    Untuk sort berdasrkan `type` terdapat options tambahan untuk sorting lagi.
+    For sort by `type` there are additional options for sorting again.
 --sort-type-flag <n>
-    Prioritas sort untuk type flag.
-    <n> adalah integer 1 sampai 9. Default 1.
+    Sort priority for the flag type.
+    <n> is an integer 1 through 9. Default 1.
 --sort-type-flag-value <n>
     Prioritas sort untuk type flag-value.
-    <n> adalah integer 1 sampai 9. Default 3.
+    <n> is an integer 1 through 9. Default 3.
 --sort-type-increment <n>
     Prioritas sort untuk type increment.
-    <n> adalah integer 1 sampai 9. Default 4.
+    <n> is an integer 1 through 9. Default 4.
 --sort-type-multivalue <n>
     Prioritas sort untuk type multivalue.
-    <n> adalah integer 1 sampai 9. Default 5.
+    <n> is an integer 1 through 9. Default 5.
 --sort-type-value <n>
     Prioritas sort untuk type value.
-    <n> adalah integer 1 sampai 9. Default 2.
+    <n> is an integer 1 through 9. Default 2.
 --with-end-options-double-dash
-    Code yang dibuat akan menjadikan double dash sebagai end options.
+    The generated code will make the double dash as end options.
 --without-end-options-double-dash
-    Code yang dibuat tidak akan menjadikan double dash sebagai end options.
+    The generated code will not make the double dash as end options.
 --with-end-options-first-operand
-    Code yang dibuat akan menjadikan first operand (argument non options)
-    sebagai end options.
+    The generated code will make the first operand (argument non options)
+    as end options.
 --without-end-options-first-operand
-    Code yang dibuat tidak akan menjadikan first operand
-    (argument non options) sebagai end options.
+    The generated code will not make the first operand (argument non options)
+    as end options.
+```
