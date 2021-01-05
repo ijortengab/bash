@@ -95,7 +95,6 @@
 #
 # Tested in Ubuntu 20.04 bash version:
 # GNU bash, version 4.4.20(1)-release (x86_64-pc-linux-gnu)
-
 CodeGeneratorParseOptions() {
 
     # Global Variable
