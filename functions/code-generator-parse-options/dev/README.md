@@ -116,9 +116,3 @@ done
 Navigate to `example-wget` and `example-ssh` directory to learn more deeply.
 
 See the `DOCUMENTATION.md` file for a complete guide.
-
-# Reference
-
-https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
-
-https://unix.stackexchange.com/questions/96703/what-is-a-non-option-argument
