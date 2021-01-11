@@ -163,8 +163,7 @@ For complex options definitions: `CSV`
     The generated code doesn't create a definition of original arguments.
 --no-rebuild-arguments
     The generated code doesn't create a reposition arguments. (set -- ${array[@]})
-    Use it if your script doesn't need operands (arguments non option) or the
-    entire options are standalone.
+    Use it if your script doesn't need operands (arguments non option).
     This option does not apply in case of a second loop with getopts, ie
     there is a single character type short option that needs value (value,
     flag_value, multivalue) or there are at least two single short options
