@@ -110,7 +110,9 @@ The key field is:
   `multivalue`, `increment`). If this key omitted, default is `flag`.
 - `priority`, integer to sort which low number is high priority,
 - `flag_option`, set `reverse` if you wants to set zero value `0` instead of `1`
-  if type if `flag`.
+  or set `true=n` if you wants to set `n` value instead of `1` which `n` value
+  can changed to any string.
+  Affected only for `flag` type.
 
 Example:
 

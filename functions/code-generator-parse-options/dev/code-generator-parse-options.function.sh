@@ -314,7 +314,8 @@ CodeGeneratorParseOptions() {
                     parameter) _parameter="$value" ;;
                     flag_option)
                         case $value in
-                            reverse) _flag=0
+                            reverse) _flag=0 ;;
+                            true=*) _flag="${value#*=}"
                         esac
                         ;;
                     # Key for Internal only.
