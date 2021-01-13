@@ -1,4 +1,4 @@
-# Computes the difference of arrays
+# Computes the difference of arrays.
 #
 # Globals:
 #   Modified: _return

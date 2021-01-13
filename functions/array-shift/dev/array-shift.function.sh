@@ -1,4 +1,4 @@
-# Shift an element off the beginning of array
+# Shift an element off the beginning of array.
 #
 # Globals:
 #   Modified: _return

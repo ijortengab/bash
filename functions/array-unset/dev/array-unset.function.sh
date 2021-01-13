@@ -4,8 +4,8 @@
 #   Modified: _return
 #
 # Arguments:
-#   1 = key off element value that will be remove.
-#   2 = Parameter of the array.
+#   1 = key off element value that will be remove
+#   2 = Parameter of the array
 #
 # Returns:
 #   None

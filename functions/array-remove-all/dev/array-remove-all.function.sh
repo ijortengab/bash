@@ -1,4 +1,4 @@
-# Shift all element from the array
+# Shift all element from the array.
 #
 # Globals:
 #   Modified: _return
