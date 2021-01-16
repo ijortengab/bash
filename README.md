@@ -57,3 +57,16 @@ functions/var-dump/dev/var-dump.function.sh
 `VarDump()`
 
 > Variable Dump for Debugging.
+
+## Commands
+
+List all commands.
+
+```sh
+find commands/ -maxdepth 3 -type f -name *.sh | sort
+find commands/ -maxdepth 3 -type f -name *.sh | sort | while IFS="" read -r p; do cat "$p"; done
+```
+
+```txt
+commands/tester/dev/tester.sh
+```
