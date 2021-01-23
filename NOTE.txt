@@ -1,0 +1,13 @@
+Command to list functions.
+
+```sh
+find functions/ -maxdepth 3 -type f -name *.sh | sort
+find functions/ -maxdepth 3 -type f -name *.sh | sort | while IFS="" read -r p; do cat "$p"; done
+```
+
+Command to list commands.
+
+```sh
+find commands/ -maxdepth 3 -type f -name *.sh | sort
+find commands/ -maxdepth 3 -type f -name *.sh | sort | while IFS="" read -r p; do cat "$p"; done
+```

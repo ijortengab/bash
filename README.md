@@ -4,11 +4,6 @@
 
 List all functions.
 
-```sh
-find functions/ -maxdepth 3 -type f -name *.sh | sort
-find functions/ -maxdepth 3 -type f -name *.sh | sort | while IFS="" read -r p; do cat "$p"; done
-```
-
 ```txt
 functions/array-diff/dev/array-diff.function.sh
 functions/array-remove-all/dev/array-remove-all.function.sh
@@ -21,52 +16,58 @@ functions/code-generator-parse-options/dev/code-generator-parse-options.function
 functions/var-dump/dev/var-dump.function.sh
 ```
 
-`ArrayDiff`
+### ArrayDiff
 
-> Computes the difference of arrays
+ - Computes the difference of arrays
 
-`ArrayRemoveAll`
+### ArrayRemoveAll
 
-> Shift all element from the array
+ - Shift all element from the array
 
-`ArrayRemove`
+### ArrayRemove
 
-> Shift an element from the array, only first match.
+ - Shift an element from the array, only first match.
 
-`ArraySearch`
+### ArraySearch
 
-> Find element in Array. Searches the array for a given value and returns the
-> first corresponding key if successful.
+ - Find element in Array. Searches the array for a given value and returns the first corresponding key if successful.
 
-`ArrayShift`
+### ArrayShift
 
-> Shift an element off the beginning of array.
+ - Shift an element off the beginning of array.
 
-`ArrayUnique`
+### ArrayUnique
 
-> Removes duplicate values from an array.
+ - Removes duplicate values from an array.
 
-`ArrayUnset`
+### ArrayUnset
 
-> Shift an element from the array by its key/index number
+ - Shift an element from the array by its key/index number
 
-`CodeGeneratorParseOptions()`
+### CodeGeneratorParseOptions()
 
-> Code Generator for Parsing Options in Command Line Arguments.
+ - Code Generator for Parsing Options in Command Line Arguments.
+ - [README](https://github.com/ijortengab/bash/tree/master/functions/code-generator-parse-options/dev)
 
-`VarDump()`
+### VarDump()
 
-> Variable Dump for Debugging.
+ - Variable Dump for Debugging.
 
 ## Commands
 
 List all commands.
 
-```sh
-find commands/ -maxdepth 3 -type f -name *.sh | sort
-find commands/ -maxdepth 3 -type f -name *.sh | sort | while IFS="" read -r p; do cat "$p"; done
-```
-
 ```txt
+commands/rmtime/dev/rmtime.sh
 commands/tester/dev/tester.sh
 ```
+
+### rmtime
+
+ - Reset the modification time of file if there is date information in filename.
+ - [README](https://github.com/ijortengab/bash/tree/master/commands/rmtime/dev)
+
+### tester
+
+ - Test the command then set the expected.
+ - [README](https://github.com/ijortengab/bash/tree/master/commands/tester/dev)
