@@ -1,9 +1,4 @@
 #!/bin/bash
-# Reference
-# https://stackoverflow.com/questions/38491986/increment-hours-minutes-seconds-of-date-in-yyyymmddhhmmss-using-bash/38492128#38492128
-# https://stackoverflow.com/questions/2264428/how-to-convert-a-string-to-lower-case-in-bash
-# https://stackoverflow.com/questions/6239350/how-to-extract-duration-time-from-ffmpeg-output/6239379#6239379
-# https://askubuntu.com/questions/844711/how-can-i-find-all-video-files-on-my-system/844720#844720
 isVideo() {
     # Populer.
     if [[ "$extension" == 'mp4' ]];then return 0
