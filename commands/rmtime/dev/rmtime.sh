@@ -1,4 +1,19 @@
 #!/bin/bash
+
+_new_arguments=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --duration=*|-d=*) duration="${1#*=}"; shift ;;
+        --duration|-d) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then duration="$2"; shift; fi; shift ;;
+        *) _new_arguments+=("$1"); shift ;;
+    esac
+done
+
+set -- "${_new_arguments[@]}"
+
+unset _new_arguments
+
 isVideo() {
     # Populer.
     if [[ "$extension" == 'mp4' ]];then return 0
@@ -7,61 +22,107 @@ isVideo() {
     fi
     return 1
 }
+
 getDuration() {
     if command -v ffmpeg &> /dev/null
     then
-        ffmpeg -i "$1" 2>&1 | grep -o -P "(?<=Duration: ).*?(?=,)"
-    # For WSL2.
+        ffmpeg -i "$full_path" 2>&1 | grep -o -P "(?<=Duration: ).*?(?=,)"
+    # ffmpeg.exe for WSL2.
     elif command -v ffmpeg.exe &> /dev/null
     then
-        ffmpeg.exe -i "$1" 2>&1 | grep -o -P "(?<=Duration: ).*?(?=,)"
+        ffmpeg.exe -i "$full_path" 2>&1 | grep -o -P "(?<=Duration: ).*?(?=,)"
     fi
 }
+
+# Get files from standard input.
+if [ ! -t 0 ]; then
+    while read _each; do
+        files_arguments+=("$_each")
+    done </dev/stdin
+fi
+
+# Get files from argument.
+while [[ $# -gt 0 ]]; do
+    files_arguments+=("$1")
+    shift
+done
+
+set -- "${files_arguments[@]}"
+
 if [ "$1" == '' ];then
     cat <<- EOF >&2
-Reset the modification time of file if there is date information in filename.
+Usage: rmtime <file|STDIN> [--duration=<duration>]
+       rmtime <file|STDIN> [<file>]...
 
-Usage: rmtime <file> [<duration>]
+Reset the modification time of file with datetime information in filename.
+
+Options.
+   -d, --duration
+        Add duration, for video file only if ffmpeg not exists
+
+Version 0.1
 EOF
     exit 1
 fi
-if [ ! -f "$1" ];then
-    echo File not found: "$1" >&2
+
+if [[ $# -gt 1 && ! $duration == '' ]];then
+    echo The --duration option can only be used with one operand. >&2
     exit 1
 fi
-full_path=$(realpath "$1")
-basename=$(basename -- "$full_path")
-extension="${basename##*.}"
-extension=$(echo "$extension" | tr '[:upper:]' '[:lower:]')
-filename="${basename%.*}"
-if isVideo;then
-    duration=`getDuration "$1"`
-    [ $duration ] || duration="$2"
-    if [[ "$duration" == '' ]];then
-        echo Need length of video at second argument with format \"[[hh:]mm:]ss\" >&2
-        exit 1
-    else
+
+while [[ $# -gt 0 ]]; do
+    # Bring back filename to stdout.
+    echo "$1"
+    full_path=$(realpath "$1")
+    basename=$(basename -- "$full_path")
+    if [ ! -f "$full_path" ];then
+        echo -e "   ""\e[91m"[ error ]"\e[39m" File not found: "$full_path" >&2
+        shift
+        continue
+    fi
+    extension="${basename##*.}"
+    extension=$(echo "$extension" | tr '[:upper:]' '[:lower:]')
+    filename="${basename%.*}"
+    digit=$(echo "$filename" | sed -E 's|[^0-9]||g')
+    s=${digit:0:14}
+    if [[ ! ${#s} == 14 ]];then
+        echo -e "   ""\e[91m"[ skip ]"\e[39m" Digit that represents of YYYYMMDDHHMMSS not found in filename: "$basename". >&2
+        shift
+        continue
+    fi
+    if isVideo;then
+        if [[ "$duration" == '' ]];then
+            duration=`getDuration`
+        fi
+        if [[ "$duration" == '' ]];then
+            echo -e "   ""\e[91m"[ skip ]"\e[39m" Duration not found. For precisision, add --duration option with format argument: \"[[hh:]mm:]ss\" >&2
+            shift
+            continue
+        fi
         add_s=$(echo $duration | grep -E -o "[0-9.]+$")
         add_m=$(echo $duration | grep -E -o "[0-9]+:[0-9.]+$" | sed -E "s|:[0-9.]+$||")
         add_h=$(echo $duration | grep -E -o "[0-9]+:[0-9]+:[0-9.]+$" | sed -E "s|:[0-9]+:[0-9.]+$||")
     fi
-fi
-digit=$(echo "$filename" | sed -E 's|[^0-9]||g')
-s=${digit:0:14}
-if [[ ! ${#s} == 14 ]];then
-    echo Digit that represents of YYYYMMDDHHMMSS not found in filename. >&2
-    exit 2
-fi
-if [[ ! $add_s == '' ]];then
-    s=$(date -u -d "${s:0:8} ${s:8:2}:${s:10:2}:${s:12:2} UTC +${add_s} sec" '+%Y%m%d%H%M%S')
-fi
-if [[ ! $add_m == '' ]];then
-    s=$(date -u -d "${s:0:8} ${s:8:2}:${s:10:2}:${s:12:2} UTC +${add_m} min" '+%Y%m%d%H%M%S')
-fi
-if [[ ! $add_h == '' ]];then
-    s=$(date -u -d "${s:0:8} ${s:8:2}:${s:10:2}:${s:12:2} UTC +${add_h} hour" '+%Y%m%d%H%M%S')
-fi
-echo -e "\e[92m"[ ok ]"\e[39m" "\e[93m"touch"\e[39m" "\e[95m"-m"\e[39m" "$1" "\e[95m"-t"\e[39m" "${s:0:12}.${s:12:14}" >&2
-touch -m "$1" -t "${s:0:12}.${s:12:14}"
-# Bring back filename to stdout.
-echo "$1"
+    if [[ ! $add_s == '' ]];then
+        s=$(date -u -d "${s:0:8} ${s:8:2}:${s:10:2}:${s:12:2} UTC +${add_s} sec" '+%Y%m%d%H%M%S')
+    fi
+    if [[ ! $add_m == '' ]];then
+        s=$(date -u -d "${s:0:8} ${s:8:2}:${s:10:2}:${s:12:2} UTC +${add_m} min" '+%Y%m%d%H%M%S')
+    fi
+    if [[ ! $add_h == '' ]];then
+        s=$(date -u -d "${s:0:8} ${s:8:2}:${s:10:2}:${s:12:2} UTC +${add_h} hour" '+%Y%m%d%H%M%S')
+    fi
+    echo -e "   ""\e[92m"[ ok ]"\e[39m" "\e[93m"touch"\e[39m" "\e[95m"-m"\e[39m" "$1" "\e[95m"-t"\e[39m" "${s:0:12}.${s:12:14}" >&2
+    touch -m "$1" -t "${s:0:12}.${s:12:14}"
+    # Reset.
+    duration=
+    add_s=
+    add_m=
+    add_h=
+    full_path=
+    basename=
+    extension=
+    filename=
+    digit=
+    shift
+done

@@ -46,19 +46,29 @@ rmtime VID_20200714_141207.mp4
 ```
 
 ```
-rmtime VID_20200715_141207.mp4 30
+rmtime VID_20200715_141207.mp4 --duration 30
 ```
 
 ```
-rmtime VID_20200716_141207.mp4 6:30
+rmtime VID_20200716_141207.mp4 --duration 6:30
 ```
 
 ```
-rmtime VID_20200717_141207.mp4 5:06:30
+rmtime VID_20200717_141207.mp4 --duration 5:06:30
 ```
 
-If there are not `ffmpeg` and you want ignore the duration, add `0` (zero) as argument.
+If there are not `ffmpeg` and you omitted the --duration option, the file will not process.
+
+## Bulk Process
+
+Works well with asterix.
 
 ```
-rmtime VID_20200718_141207.mp4 0
+rmtime *.mp4
+```
+
+or standard input.
+
+```
+ls *.jpg | rmtime
 ```
