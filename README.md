@@ -88,4 +88,4 @@ commands/ttw/dev/ttw.sh
 ### dcurl
 
  - Provide dialog to input URL before executing curl.
- - [README](https://github.com/ijortengab/bash/tree/master/commands/backup/dev)
+ - [README](https://github.com/ijortengab/bash/tree/master/commands/dcurl/dev)

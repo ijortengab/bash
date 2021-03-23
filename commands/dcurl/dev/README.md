@@ -94,5 +94,5 @@ json - cURL download files issue - Stack Overflow.html
 
 ## Options
 
-Use flag option `-i` or `--include` to include a shell script before execute curl.
+Use option `-i` or `--include` to include a shell script before execute curl.
 Use it to override the variable $output.
