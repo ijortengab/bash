@@ -6,19 +6,19 @@ The date information must be provided in filename consisting of 14 digits repres
 
 ## Setup
 
-Download with curl.
+Download and save file as `rmtime` name.
 
+Curl:
 ```
 curl -L https://git.io/rmtime.sh -o rmtime
 ```
 
-or wget.
-
+Wget:
 ```
 wget https://git.io/rmtime.sh -O rmtime
 ```
 
-Save file as `rmtime` name, then put in your $PATH variable.
+Put file in your $PATH.
 
 ```
 chmod +x rmtime

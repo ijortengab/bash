@@ -39,7 +39,7 @@ Options.
    -c, --copy
         Copy file instead of moving it.
 
-Version 0.1
+Version 0.2
 EOF
     exit 1
 fi
@@ -51,7 +51,7 @@ while [[ $# -gt 0 ]]; do
     dirname=$(dirname "$full_path")
     basename=$(basename -- "$full_path")
     if [ ! -f "$full_path" ];then
-        echo -e "   ""\e[91m"[ error ]"\e[39m" File not found: "$full_path" >&2
+        echo -e "   ""\e[91m"[error]"\e[39m" File not found: "$full_path" >&2
         shift
         continue
     fi
@@ -62,7 +62,7 @@ while [[ $# -gt 0 ]]; do
     filename="${basename%.*}"
     if [[ "$filename" =~ ~[0-9]+$ ]];then
         # echo \$filename "$filename"
-        echo -e "   ""\e[33m"[ warning ]"\e[39m" File skipped: "$full_path" >&2
+        echo -e "   ""\e[33m"[warning]"\e[39m" File skipped: "$full_path" >&2
         shift
         continue
     fi
@@ -82,10 +82,10 @@ while [[ $# -gt 0 ]]; do
     newbasename=$(basename -- "$newfullpath")
     if [[ $copy == 1 ]];then
         cp "$full_path" "$newfullpath"
-        echo -e "   ""\e[32m"[ success ]"\e[39m" File copied: "$newbasename" >&2
+        echo -e "   ""\e[32m"[success]"\e[39m" File copied: "$newbasename" >&2
     else
         mv "$full_path" "$newfullpath"
-        echo -e "   ""\e[32m"[ success ]"\e[39m" File moved: "$newbasename" >&2
+        echo -e "   ""\e[32m"[success]"\e[39m" File moved: "$newbasename" >&2
     fi
     # Reset.
     full_path=
