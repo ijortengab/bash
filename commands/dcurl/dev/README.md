@@ -86,6 +86,12 @@ $output:
 json - cURL download files issue - Stack Overflow.html
 ```
 
+## Variation
+
+ 1. `curl -L -O -J "$url_download"`
+ 2. `curl -L -o "$output" "$url_download"`
+ 3. `curl -L -H "Referer: $url_front_page"  -o "$output" "$url_download"`
+
 ## Options
 
 Use flag option `-i` or `--include` to include a shell script before execute curl.

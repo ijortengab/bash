@@ -58,8 +58,11 @@ functions/var-dump/dev/var-dump.function.sh
 List all commands.
 
 ```txt
+commands/backup/dev/backup.sh
+commands/dcurl/dev/dcurl.sh
 commands/rmtime/dev/rmtime.sh
 commands/tester/dev/tester.sh
+commands/ttw/dev/ttw.sh
 ```
 
 ### rmtime
@@ -71,3 +74,18 @@ commands/tester/dev/tester.sh
 
  - Test the command then set the expected.
  - [README](https://github.com/ijortengab/bash/tree/master/commands/tester/dev)
+
+### ttw
+
+ - Bulk trim trailing whitespace of files.
+ - [README](https://github.com/ijortengab/bash/tree/master/commands/ttw/dev)
+
+### backup
+
+ - Provide fast way to save backup of file.
+ - [README](https://github.com/ijortengab/bash/tree/master/commands/backup/dev)
+
+### dcurl
+
+ - Provide dialog to input URL before executing curl.
+ - [README](https://github.com/ijortengab/bash/tree/master/commands/backup/dev)
