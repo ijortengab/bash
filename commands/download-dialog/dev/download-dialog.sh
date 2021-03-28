@@ -225,7 +225,6 @@ until [[ $finish == 1 ]]; do
                         echo -e " ""\e[35m""[""\e[33m"e"\e[35m""]""\e[39m"" Edit"
                         # For WSL 2 or Cygwin.
                         command -v clip.exe >/dev/null && echo -n "$url_download" | clip.exe && echo -e "\e[36m""Copied current value to Clipboard.""\e[33m"
-                        command -v xclip >/dev/null && echo -n "$url_download" | xclip -selection clipboard && echo -e "\e[36m""Copied current value to Clipboard.""\e[33m"
                         read -p " "$'\e[33m'"\$url_download"$'\e[39m'": " url_download
                     elif [[ $option == "d" ]];then
                         echo -e " ""\e[35m""[""\e[33m"d"\e[35m""]""\e[39m"" Delete"
@@ -276,7 +275,6 @@ until [[ $finish == 1 ]]; do
                         echo -e " ""\e[35m""[""\e[33m"e"\e[35m""]""\e[39m"" Edit"
                         # For WSL 2 or Cygwin.
                         command -v clip.exe >/dev/null && echo -n "$url_front_page" | clip.exe && echo -e "\e[36m""Copied current value to Clipboard.""\e[33m"
-                        command -v xclip >/dev/null && echo -n "$url_download" | xclip -selection clipboard && echo -e "\e[36m""Copied current value to Clipboard.""\e[33m"
                         read -p " "$'\e[33m'"\$url_front_page"$'\e[39m'": " url_front_page
                     elif [[ $option == "d" ]];then
                         echo -e " ""\e[35m""[""\e[33m"d"\e[35m""]""\e[39m"" Delete"
@@ -327,7 +325,6 @@ until [[ $finish == 1 ]]; do
                         echo -e " ""\e[35m""[""\e[33m"e"\e[35m""]""\e[39m"" Edit"
                         # For WSL 2 or Cygwin.
                         command -v clip.exe >/dev/null && echo -n "$output" | clip.exe && echo -e "\e[36m""Copied current value to Clipboard.""\e[33m"
-                        command -v xclip >/dev/null && echo -n "$url_download" | xclip -selection clipboard && echo -e "\e[36m""Copied current value to Clipboard.""\e[33m"
                         read -p " "$'\e[33m'"\$output"$'\e[39m'": " output
                     elif [[ $option == "d" ]];then
                         echo -e " ""\e[35m""[""\e[33m"d"\e[35m""]""\e[39m"" Delete"
