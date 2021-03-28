@@ -1,0 +1,60 @@
+##
+# Memberikan autocompletion untuk command dan subcommand dengan struktur
+# sebagai berikut:
+# ```
+# download-dialog
+#  - curl
+#    - saveas
+#      - referer
+#  - wget
+#    - saveas
+#  - youtube-dl
+#    - referer
+# ```
+##
+_download_dialog() {
+    local cur prev _prev
+    local _return i stringified
+    local curl_args
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+    case ${COMP_WORDS[1]} in
+        curl)
+            case ${COMP_WORDS[2]} in
+                saveas)
+                    case ${COMP_WORDS[3]} in
+                        referer)
+                            COMPREPLY=()
+                            ;;
+                        *)
+                            COMPREPLY=($(compgen -W "referer" -- ${cur}))
+                    esac
+                    ;;
+                *)
+                    COMPREPLY=($(compgen -W "saveas" -- ${cur}))
+            esac
+            ;;
+        wget)
+            case ${COMP_WORDS[2]} in
+                saveas)
+                    COMPREPLY=()
+                    ;;
+                *)
+                    COMPREPLY=($(compgen -W "saveas" -- ${cur}))
+            esac
+            ;;
+        youtube-dl)
+            case ${COMP_WORDS[2]} in
+                referer)
+                    COMPREPLY=()
+                    ;;
+                *)
+                    COMPREPLY=($(compgen -W "referer" -- ${cur}))
+            esac
+            ;;
+        *)
+            COMPREPLY=($(compgen -W "curl wget youtube-dl" -- ${cur}))
+    esac
+}
+
+complete -F _download_dialog download-dialog
