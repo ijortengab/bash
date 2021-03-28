@@ -89,3 +89,9 @@ commands/ttw/dev/ttw.sh
 
  - Provide dialog to input URL before executing curl.
  - [README](https://github.com/ijortengab/bash/tree/master/commands/dcurl/dev)
+ - DEPRACATED. Use `download-dialog` instead.
+
+### download-dialog
+
+ - Provide dialog to input URL before executing download command.
+ - [README](https://github.com/ijortengab/bash/tree/master/commands/download-dialog/dev)
