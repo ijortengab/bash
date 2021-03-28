@@ -8,12 +8,12 @@ Download and save file as `backup` name.
 
 Curl:
 ```
-curl -L https://raw.githubusercontent.com/ijortengab/bash/master/commands/backup/dev/backup.sh -o backup
+curl -L https://git.io/JYnN1 -o backup
 ```
 
 Wget:
 ```
-wget https://raw.githubusercontent.com/ijortengab/bash/master/commands/backup/dev/backup.sh -O backup
+wget https://git.io/JYnN1 -O backup
 ```
 
 Put file in your $PATH.

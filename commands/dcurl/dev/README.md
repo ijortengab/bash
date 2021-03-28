@@ -8,12 +8,12 @@ Download and save file as `dcurl` name.
 
 Curl:
 ```
-curl -L https://raw.githubusercontent.com/ijortengab/bash/master/commands/dcurl/dev/dcurl.sh -o dcurl
+curl -L https://git.io/JYcJg -o dcurl
 ```
 
 Wget:
 ```
-wget https://raw.githubusercontent.com/ijortengab/bash/master/commands/dcurl/dev/dcurl.sh -O dcurl
+wget https://git.io/JYcJg -O dcurl
 ```
 
 Put file in your $PATH.

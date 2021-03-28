@@ -8,12 +8,12 @@ Download and save file as `download-dialog` name.
 
 Curl:
 ```
-curl -L https://raw.githubusercontent.com/ijortengab/bash/master/commands/download-dialog/dev/download-dialog.sh -o download-dialog
+curl -L https://git.io/download-dialog.sh -o download-dialog
 ```
 
 Wget:
 ```
-wget https://raw.githubusercontent.com/ijortengab/bash/master/commands/download-dialog/dev/download-dialog.sh -O download-dialog
+wget https://git.io/download-dialog.sh -O download-dialog
 ```
 
 Put file in your $PATH.
