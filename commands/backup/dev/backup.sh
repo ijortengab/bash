@@ -5,6 +5,8 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --copy|-c) copy=1; shift ;;
+        --target-directory=*|-t=*) target_directory="${1#*=}"; shift ;;
+        --target-directory|-t) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then target_directory="$2"; shift; fi; shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
 done
@@ -38,20 +40,42 @@ Backup every file with suffix integer.
 Options.
    -c, --copy
         Copy file instead of moving it.
+   -t <d>, --target-directory <d>
+        Backup file to target directory.
 
-Version 0.2
+Version 0.3
 EOF
     exit 1
+fi
+if [ -n "$target_directory" ];then
+    # Trim trailing slash.
+    target_directory=${target_directory%/}
+    target_directory_full_path=$(realpath "$target_directory")
+    if [ ! -d "$target_directory_full_path" ];then
+        echo -e "   ""\e[91m"[error]"\e[39m" Directory not found: "$target_directory_full_path" >&2
+        exit 1
+    fi
 fi
 
 while [[ $# -gt 0 ]]; do
     # Bring back filename to stdout.
     echo "$1"
-    full_path=$(realpath "$1")
+    full_path=$(realpath --no-symlinks "$1")
     dirname=$(dirname "$full_path")
     basename=$(basename -- "$full_path")
-    if [ ! -f "$full_path" ];then
-        echo -e "   ""\e[91m"[error]"\e[39m" File not found: "$full_path" >&2
+    notfound=1
+    if [ -f "$full_path" ];then
+        notfound=0
+        which=File
+    elif [ -L "$full_path" ];then
+        notfound=0
+        which=Link
+    elif [ -d "$full_path" ];then
+        notfound=0
+        which=Directory
+    fi
+    if [[ "$notfound" == 1 ]];then
+        echo -e "   ""\e[91m"[error]"\e[39m" File or directory not found: "$full_path" >&2
         shift
         continue
     fi
@@ -67,27 +91,45 @@ while [[ $# -gt 0 ]]; do
         continue
     fi
     i=1
-    newfullpath="${dirname}/${filename}~${i}"
+    newdirname="$dirname"
+    if [ -n "$target_directory_full_path" ];then
+        newdirname="$target_directory_full_path"
+    fi
+    newfullpath="${newdirname}/${filename} (${i})"
     [ -z "$extension" ] || newfullpath="$newfullpath"."$extension"
     if [[ -e "$newfullpath" || -L "$newfullpath" ]] ; then
         let i++
-        newfullpath="${dirname}/${filename}~${i}"
+        newfullpath="${newdirname}/${filename} (${i})"
         [ -z "$extension" ] || newfullpath="$newfullpath"."$extension"
         while [[ -e "$newfullpath" || -L "$newfullpath" ]] ; do
             let i++
-            newfullpath="${dirname}/${filename}~${i}"
+            newfullpath="${newdirname}/${filename} (${i})"
             [ -z "$extension" ] || newfullpath="$newfullpath"."$extension"
         done
     fi
     newbasename=$(basename -- "$newfullpath")
+    [ -n "$target_directory" ] && newbasename="$target_directory"/"$newbasename"
     if [[ $copy == 1 ]];then
-        cp "$full_path" "$newfullpath"
-        echo -e "   ""\e[32m"[success]"\e[39m" File copied: "$newbasename" >&2
+        if [[ $which == Directory ]];then
+            cp -r "$full_path" "$newfullpath"
+        else
+            cp "$full_path" "$newfullpath"
+        fi
+        if [[ -e "$newfullpath" || -L "$newfullpath" ]] ; then
+            echo -e "   ""\e[32m"[success]"\e[39m" $which copied: "$newbasename" >&2
+        else
+            echo -e "   ""\e[91m"[error]"\e[39m" Copy failed. File or directory not found: "$newfullpath" >&2
+        fi
     else
         mv "$full_path" "$newfullpath"
-        echo -e "   ""\e[32m"[success]"\e[39m" File moved: "$newbasename" >&2
+        if [[ -e "$newfullpath" || -L "$newfullpath" ]] ; then
+            echo -e "   ""\e[32m"[success]"\e[39m" $which moved: "$newbasename" >&2
+        else
+            echo -e "   ""\e[91m"[error]"\e[39m" Move failed. File or directory not found: "$newfullpath" >&2
+        fi
     fi
     # Reset.
+    which=
     full_path=
     dirname=
     basename=
@@ -95,5 +137,6 @@ while [[ $# -gt 0 ]]; do
     filename=
     newfullpath=
     newbasename=
+    newdirname=
     shift
 done
