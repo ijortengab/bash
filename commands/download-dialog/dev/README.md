@@ -209,7 +209,3 @@ export PATH=$PATH:'/mnt/c/Program Files (x86)/FormatFactory'
 ```
 
 Binary `youtube-dl.exe` for Windows can download directly from their website.
-
-## Reference
-
-https://stackoverflow.com/questions/42901942/how-do-we-download-a-blob-url-video

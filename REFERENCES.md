@@ -25,3 +25,7 @@ https://stackoverflow.com/questions/2264428/how-to-convert-a-string-to-lower-cas
 https://stackoverflow.com/questions/6239350/how-to-extract-duration-time-from-ffmpeg-output/6239379#6239379
 
 https://askubuntu.com/questions/844711/how-can-i-find-all-video-files-on-my-system/844720#844720
+
+https://stackoverflow.com/questions/42901942/how-do-we-download-a-blob-url-video
+
+https://stackoverflow.com/questions/49828241/bash-how-to-strip-the-first-and-last-slash-in-a-string-if-present
