@@ -19,11 +19,11 @@
 #   ```
 ArrayRemove() {
     local index match="$1"
-    local source=("${!2}")
-    for index in "${!source[@]}"; do
-       if [[ "${source[$index]}" == "${match}" ]]; then
+    _return=("${!2}")
+    for index in "${!_return[@]}"; do
+       if [[ "${_return[$index]}" == "${match}" ]]; then
+            _return=("${_return[@]:0:$index}" "${_return[@]:$(($index + 1))}")
            break
        fi
     done
-    _return=("${source[@]:0:$index}" "${source[@]:$(($index + 1))}")
 }
