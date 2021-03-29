@@ -105,6 +105,19 @@ Version 0.1
 Copy paste `bash_completion.d/download-dialog` file to `/etc/bash_completion.d`
 directory for quick typing subcommand with TAB key.
 
+```
+wget https://git.io/download-dialog-completion.sh
+mv download-dialog-completion.sh /etc/bash_completion.d/download-dialog
+```
+
+Implements now,
+
+```
+source /etc/bash_completion.d/download-dialog
+```
+
+or relaunch terminal.
+
 ## Options
 
 Example 2. Using `--include` option:
