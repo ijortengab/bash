@@ -24,13 +24,25 @@ isVideo() {
 }
 
 getDuration() {
+    local _full_path="$full_path"
+    # ffmpeg yang terinstal pada host Windows tidak mengenali path Cygwin maupun
+    # WSL2, maka konversi "$full_path" ke path-nya Windows.
+    # Jika command ini dieksekusi di Cygwin, maka:
+    if command -v cygpath.exe &> /dev/null
+    then
+        _full_path=$(cygpath.exe -w "$full_path")
+    # Jika command ini dieksekusi di WSL2, maka:
+    elif command -v wslpath &> /dev/null
+    then
+        _full_path=$(wslpath -w "$full_path")
+    fi
     if command -v ffmpeg &> /dev/null
     then
-        ffmpeg -i "$full_path" 2>&1 | grep -o -P "(?<=Duration: ).*?(?=,)"
+        ffmpeg -i "$_full_path" 2>&1 | grep -o -P "(?<=Duration: ).*?(?=,)"
     # ffmpeg.exe for WSL2.
     elif command -v ffmpeg.exe &> /dev/null
     then
-        ffmpeg.exe -i "$full_path" 2>&1 | grep -o -P "(?<=Duration: ).*?(?=,)"
+        ffmpeg.exe -i "$_full_path" 2>&1 | grep -o -P "(?<=Duration: ).*?(?=,)"
     fi
 }
 
