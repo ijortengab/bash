@@ -1,5 +1,70 @@
 #!/bin/bash
 
+# Provide fast way to save backup of file.
+#
+# Example 1.
+#
+#   ```
+#   touch myfile
+#   backup.sh myfile
+#   ```
+#
+#   Command above will move `myfile` to `myfile (1)`.
+#
+# Example 2.
+#
+#   ```
+#   echo 'bla bla' > mynote.txt
+#   backup.sh mynote.txt -c
+#   echo 'wow wow' >> mynote.txt
+#   backup.sh mynote.txt -c
+#   ```
+#
+#   Command above will copy the origin `mynote.txt` to `mynote (1).txt` then
+#   copy the modified of `mynote.txt` to `mynote (2).txt`.
+#   The contents of `mynote (1).txt` is:
+#
+#   ```
+#   bla bla
+#   ```
+#
+#   The contents of `mynote (2).txt` is:
+#
+#   ```
+#   bla bla
+#   wow wow
+#   ```
+#
+# Example 3.
+#
+#   ```
+#   touch myimage.jpg \
+#         myimage (1).jpg \
+#         myimage (2).jpg
+#   backup.sh myimage.jpg
+#   ```
+#
+#   Command above will move `myimage.jpg` to `myimage (3).jpg`.
+#
+# Options
+#   -c, --copy        Copy the original source instead of moving it.
+#   -t, --target-directory
+#                     Set target directory to save backup.
+#
+# Bulk Process
+#   Works well with asterix.
+#
+#   ```
+#   backup.sh *.mp4
+#   ```
+#
+#   or standard input.
+#
+#   ```
+#   ls *.jpg | backup.sh
+#   ```
+#
+
 _new_arguments=()
 
 while [[ $# -gt 0 ]]; do
