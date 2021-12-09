@@ -1,5 +1,57 @@
 #!/bin/bash
 
+# Reset MTime is command in shell to reset the modification time of file.
+# The date information must be provided in filename consisting of 14 digits
+# represents of YYYY-MM-DD-HH-MM-SS.
+#
+# Getting Started.
+#
+#   Just execute it.
+#
+#   ```
+#   reset-mtime.sh IMG_20201202_143554.jpg
+#   ```
+#
+#   ```
+#   reset-mtime.sh Screenshot_2020-12-04-07-27-06-328_com.whatsapp.png
+#   ```
+#
+# For file video, add the duration of video only if there are not `ffmpeg`
+# in your system.
+#
+#   ```
+#   reset-mtime.sh VID_20200714_141207.mp4
+#   ```
+#
+#   ```
+#   reset-mtime.sh VID_20200715_141207.mp4 --duration 30
+#   ```
+#
+#   ```
+#   reset-mtime.sh VID_20200716_141207.mp4 --duration 6:30
+#   ```
+#
+#   ```
+#   reset-mtime.sh VID_20200717_141207.mp4 --duration 5:06:30
+#   ```
+#
+# If there are not `ffmpeg` and you omitted the --duration option, the file
+# will not process.
+#
+# Bulk Process
+#   Works well with asterix.
+#
+#   ```
+#   reset-mtime.sh *.mp4
+#   ```
+#
+#   or standard input.
+#
+#   ```
+#   ls *.jpg | reset-mtime.sh
+#   ```
+#
+
 _new_arguments=()
 
 while [[ $# -gt 0 ]]; do
