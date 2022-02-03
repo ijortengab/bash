@@ -88,6 +88,14 @@ Bulk trim trailing whitespace of files.
 filename=ttw.sh
 ```
 
+### ssh-command-generator.sh
+
+Auto create symbolic link for your daily of ssh tunneling.
+
+```sh
+filename=ssh-command-generator.sh
+```
+
 ## Functions
 
 ### ArrayDiff
