@@ -19,12 +19,13 @@ Usage:
 Then use <filename> as a command to generate and execute ssh command.
 
 Example of <filename>:
+ - pil-rpf.rport-12257.lport-22
  - pcfaris-dpf.lport-9090
  - pcdina-lpf.rport-rdp.lport-11300.triggerusehost
  - pcpuji-lpf.rport-rdp.lport-10302.triggerusehost.from-pchadi
  - pcfarah-lpf.rport-vnc.lport-10901.noloopback
  - pcfaris-lpf.rport-ssh.lport-10002
- - pcroni-lpf.rport-openvpn.lport-11103.noloopback.triggerusehost
+ - pcroni-lpf.rport-vpn.lport-11103.noloopback.triggerusehost
  - cctv3-lpf.rport-http.lport-20102.jump-p.from-pcpuji
  - s-lpf.rport-mysql.lport-30100
 
@@ -100,6 +101,19 @@ getPid() {
     fi
 }
 
+translatePort() {
+    local port
+    case $1 in
+            http) port=80 ;;
+            rdp) port=3389 ;;
+            vnc) port=5900 ;;
+            ssh) port=22 ;;
+            mysql) port=3306 ;;
+            vpn) port=1194 ;;
+    esac
+    [ -n "$port" ] && echo "$port" || echo "$1"
+}
+
 # https://stackoverflow.com/questions/12779134/parsing-ssh-config-for-proxy-information
 getIP() {
     awk -v H="$1" '
@@ -123,18 +137,12 @@ EOL
 )
 
 case "$variant" in
-    lpf)
+    lpf|rpf)
         OPTION=
         remote_port=$(grep -Eo '\.rport-[^.]+' <<< "$filename" | sed -E 's/\.rport-(.*)/\1/')
-        case $remote_port in
-            http) remote_port=80 ;;
-            rdp) remote_port=3389 ;;
-            vnc) remote_port=5900 ;;
-            ssh) remote_port=22 ;;
-            mysql) remote_port=3306 ;;
-            openvpn) remote_port=1194 ;;
-        esac
+        remote_port=$(translatePort "$remote_port")
         local_port=$(grep -Eo '\.lport-[^.]+' <<< "$filename" | sed -E 's/\.lport-(.*)/\1/')
+        local_port=$(translatePort "$local_port")
         from=$(grep -Eo '\.from-[^.]+' <<< "$filename" | sed -E 's/\.from-(.*)/\1/')
         jump=$(grep -Eo '\.jump-[^.]+' <<< "$filename" | sed -E 's/\.jump-(.*)/\1/')
         noloopback=$(grep -Eo '\.noloopback(\.|$)' <<< "$filename")
@@ -161,7 +169,13 @@ case "$variant" in
                 ip="$host"
             fi
         fi
-        OPTION+="-fN -L $local_port:$ip:$remote_port"
+        case "$variant" in
+            lpf)
+                OPTION+="-fN -L $local_port:$ip:$remote_port"
+                ;;
+            rpf)
+                OPTION+="-fN -R $remote_port:$ip:$local_port"
+        esac
         ;;
     dpf)
         local_port=$(grep -Eo '\.lport-[^.]+' <<< "$filename" | sed -E 's/\.lport-(.*)/\1/')
@@ -198,7 +212,7 @@ case "$variant" in
                     22) trigger=scp;;
                     5900) trigger=vnc;;
                     3389) trigger=rdp;;
-                    1194) trigger=openvpn;;
+                    1194) trigger=vpn;;
                 esac
             fi
             case $trigger in
@@ -208,28 +222,39 @@ case "$variant" in
                     ;;
                 scp)
                     # Progra~2 = Program Files (x86)
-                    echo cmd.exe /C start C:\\Progra~2\\WinSCP\\WinSCP.exe $ip:$local_port
-                    cmd.exe /C start C:\\Progra~2\\WinSCP\\WinSCP.exe $ip:$local_port
+                    # Simpan session di WinSCP dengan format host:port
+                    [ -f "/cygdrive/c/Program Files (x86)/WinSCP/WinSCP.exe" ] && {
+                        echo cmd.exe /C start C:\\Progra~2\\WinSCP\\WinSCP.exe $ip:$local_port
+                        cmd.exe /C start C:\\Progra~2\\WinSCP\\WinSCP.exe $ip:$local_port
+                    }
+                    [ -f "$USERPROFILE/AppData/Local/Programs/WinSCP/WinSCP.exe" ] && {
+                        echo cmd.exe /C start %USERPROFILE%\\AppData\\Local\\Programs\\WinSCP\\WinSCP.exe $ip:$local_port
+                        cmd.exe /C start %USERPROFILE%\\AppData\\Local\\Programs\\WinSCP\\WinSCP.exe $ip:$local_port
+                    }
                     ;;
                 vnc)
-                    # echo $USERPROFILE
                     # Progra~1 = Program Files
-                    if [ -f "$USERPROFILE/.passwd.vnc" ];then
-                        echo cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$local_port -password=$(<$USERPROFILE/.passwd.vnc)
-                        cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$local_port -password=$(<$USERPROFILE/.passwd.vnc)
-                    else
-                        echo cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$local_port
-                        cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$local_port
-                    fi
+                    # Simpan password di file "$USERPROFILE/.passwd.vnc"
+                    [ -f "/cygdrive/c/Program Files/TightVNC/tvnviewer.exe" ] && {
+                        args_other=
+                        if [ -f "$USERPROFILE/.passwd.vnc" ];then
+                            args_other=' -password='"$(<$USERPROFILE/.passwd.vnc)"
+                        fi
+                        echo cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$local_port$args_other
+                        cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$local_port$args_other
+                    }
                     ;;
                 rdp)
                     echo cmd.exe /C start mstsc /v:$ip:$local_port
                     cmd.exe /C start mstsc /v:$ip:$local_port
                     ;;
-                openvpn)
+                vpn)
                     # Progra~1 = Program Files
-                    echo cmd.exe /C start C:\\Progra~1\\OpenVPN\\bin\\openvpn-gui.exe --connect $ip-$local_port.ovpn
-                    cmd.exe /C start C:\\Progra~1\\OpenVPN\\bin\\openvpn-gui.exe --connect $ip-$local_port.ovpn
+                    # Simpan config VPN dengan nama $ip-$local_port.ovpn
+                    [ -f "/cygdrive/c/Program Files/OpenVPN/bin/openvpn-gui.exe" ] && {
+                        echo cmd.exe /C start C:\\Progra~1\\OpenVPN\\bin\\openvpn-gui.exe --connect $ip-$local_port.ovpn
+                        cmd.exe /C start C:\\Progra~1\\OpenVPN\\bin\\openvpn-gui.exe --connect $ip-$local_port.ovpn
+                    }
                     ;;
             esac
         fi
