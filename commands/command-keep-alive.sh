@@ -40,12 +40,12 @@ getPid() {
 CMD="$1"
 command=$(echo "$CMD" | cut -d' ' -f1)
 cleaning() {
-    echo Cleaning triggered. >&2
+    echo '[cleaning]' Triggered. >&2
     pid=$(getPid "$command" "$CMD")
     if [[ $pid == '' ]];then
-        echo PID not found. >&2
+        echo '[cleaning]' PID not found. >&2
     else
-        echo Cleaning PID $pid. >&2
+        echo '[cleaning]' Kill PID $pid. >&2
         kill $pid
     fi
     rm "$pidfile"
@@ -53,15 +53,18 @@ cleaning() {
 }
 trap cleaning SIGTERM
 trap cleaning SIGINT
-echo "$CMD" >&2
+
 while true; do
     pid=$(getPid "$command" "$CMD")
     if [[ $pid == '' ]];then
+        echo "$CMD" >&2
         echo "$CMD" | sh
+        echo $?
         pid=$(getPid "$command" "$CMD")
     fi
     if [[ $pid == '' ]];then
         echo PID not found. >&2
+        sleep 1
     else
         echo -n PID: >&2
         echo $pid
