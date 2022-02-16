@@ -216,6 +216,10 @@ case "$variant" in
         target_port=$remote_port
 esac
 
+if [[ -z "$target_port" ]];then
+    exit
+fi
+
 trigger=$(grep -Eo '\.trigger-[^.]+' <<< "$filename" | sed -E 's/\.trigger-(.*)/\1/')
 [ -n "$trigger" ] || trigger=auto
 if [[ $trigger == no ]];then
