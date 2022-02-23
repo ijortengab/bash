@@ -59,14 +59,14 @@ while true; do
     if [[ $pid == '' ]];then
         echo "$CMD" >&2
         echo "$CMD" | sh
-        echo $?
+        echo Exit code: $? >&2
         pid=$(getPid "$command" "$CMD")
     fi
     if [[ $pid == '' ]];then
         echo PID not found. >&2
         sleep 1
     else
-        echo -n PID: >&2
+        echo -n 'PID: ' >&2
         echo $pid
         while kill -0 $pid 2>/dev/null
         do
