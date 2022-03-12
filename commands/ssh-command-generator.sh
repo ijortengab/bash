@@ -132,6 +132,7 @@ variant=$(echo "$head" | cut -d'-' -f 2)
 CMD=$(cat <<- EOL
 ssh \
 -o ServerAliveInterval=10 -o ServerAliveCountMax=2 \
+-o PreferredAuthentications=publickey -o PasswordAuthentication=no \
 OPTION \
 HOST
 EOL
