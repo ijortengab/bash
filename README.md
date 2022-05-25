@@ -1,10 +1,37 @@
 # Bash Script Collection
 
-## Install
+## Variable filename
 
-Copy variable `filename` from each section, paste in Terminal, then use code below.
+List Commands:
 
-Copy code function to Clipboard (for Cygwin or WSL users):
+```sh
+filename=backup.sh
+filename=command-keep-alive.sh
+filename=downloader.sh
+filename=reset-mtime.sh
+filename=tester.sh
+filename=ttw.sh
+filename=ssh-command-generator.sh
+```
+
+List Functions:
+
+```
+filename=array-diff.function.sh
+filename=array-remove-all.function.sh
+filename=array-remove.function.sh
+filename=array-search.function.sh
+filename=array-shift.function.sh
+filename=array-unique.function.sh
+filename=array-unset.function.sh
+filename=var-dump.function.sh
+```
+
+## How to
+
+Copy variable `filename` from above section, paste in Terminal, then use code below.
+
+### How to copy code function to Clipboard (for Cygwin or WSL users):
 
 ```
 wget -qO- https://raw.githubusercontent.com/ijortengab/bash/master/functions/$filename | clip.exe
@@ -14,7 +41,7 @@ wget -qO- https://raw.githubusercontent.com/ijortengab/bash/master/functions/$fi
 curl https://raw.githubusercontent.com/ijortengab/bash/master/functions/array-shift.function.sh | clip.exe
 ```
 
-Show code function in Terminal:
+### How to show code function in Terminal:
 
 ```
 wget -qO- https://raw.githubusercontent.com/ijortengab/bash/master/functions/$filename
@@ -24,7 +51,7 @@ wget -qO- https://raw.githubusercontent.com/ijortengab/bash/master/functions/$fi
 curl https://raw.githubusercontent.com/ijortengab/bash/master/functions/$filename
 ```
 
-Download then put command in `$PATH`.
+### How to download then put command in `$PATH`.
 
 ```
 wget https://raw.githubusercontent.com/ijortengab/bash/master/commands/$filename
@@ -38,7 +65,7 @@ chmod a+x $filename
 mv $filename -t /usr/local/bin
 ```
 
-## Commands
+## List Commands
 
 ### backup.sh
 
@@ -74,7 +101,7 @@ filename=reset-mtime.sh
 
 ### tester.sh
 
-Test the command then set the expected. [README](https://github.com/ijortengab/bash/tree/master/commands/tester/dev)
+Test the command then set the expected.
 
 ```sh
 filename=tester.sh
@@ -96,7 +123,7 @@ Auto create symbolic link for your daily of ssh tunneling.
 filename=ssh-command-generator.sh
 ```
 
-## Functions
+## List Functions
 
 ### ArrayDiff
 
