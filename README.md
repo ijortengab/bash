@@ -1,8 +1,8 @@
 # Bash Script Collection
 
-## Variable filename
+## How to install command
 
-List Commands:
+1. Set variable `filename` in Terminal. Choose the one you want.
 
 ```sh
 filename=backup.sh
@@ -12,9 +12,28 @@ filename=reset-mtime.sh
 filename=tester.sh
 filename=ttw.sh
 filename=ssh-command-generator.sh
+filename=rotate-ffmpeg.sh
 ```
 
-List Functions:
+2. Download then put command in `$PATH`.
+
+```
+wget https://raw.githubusercontent.com/ijortengab/bash/master/commands/$filename
+chmod a+x $filename
+mv $filename -t /usr/local/bin
+```
+
+... or ...
+
+```
+curl -O https://raw.githubusercontent.com/ijortengab/bash/master/commands/$filename
+chmod a+x $filename
+mv $filename -t /usr/local/bin
+```
+
+## How to show code function in Terminal
+
+1. Set variable `filename` in Terminal. Choose the one you want.
 
 ```
 filename=array-diff.function.sh
@@ -27,42 +46,28 @@ filename=array-unset.function.sh
 filename=var-dump.function.sh
 ```
 
-## How to
-
-Copy variable `filename` from above section, paste in Terminal, then use code below.
-
-### How to copy code function to Clipboard (for Cygwin or WSL users):
-
-```
-wget -qO- https://raw.githubusercontent.com/ijortengab/bash/master/functions/$filename | clip.exe
-```
-
-```
-curl https://raw.githubusercontent.com/ijortengab/bash/master/functions/array-shift.function.sh | clip.exe
-```
-
-### How to show code function in Terminal:
+2. Execute code below.
 
 ```
 wget -qO- https://raw.githubusercontent.com/ijortengab/bash/master/functions/$filename
 ```
 
+... or ...
+
 ```
 curl https://raw.githubusercontent.com/ijortengab/bash/master/functions/$filename
 ```
 
-### How to download then put command in `$PATH`.
+3. Alternative, send to Clipboard (for Cygwin or WSL users).
 
 ```
-wget https://raw.githubusercontent.com/ijortengab/bash/master/commands/$filename
-chmod a+x $filename
-mv $filename -t /usr/local/bin
+wget -qO- https://raw.githubusercontent.com/ijortengab/bash/master/functions/$filename | clip.exe
 ```
 
+... or ...
+
 ```
-curl -O https://raw.githubusercontent.com/ijortengab/bash/master/commands/$filename
-chmod a+x $filename
-mv $filename -t /usr/local/bin
+curl https://raw.githubusercontent.com/ijortengab/bash/master/functions/array-shift.function.sh | clip.exe
 ```
 
 ## List Commands
@@ -123,6 +128,14 @@ Auto create symbolic link for your daily of ssh tunneling.
 filename=ssh-command-generator.sh
 ```
 
+### rotate-ffmpeg.sh
+
+Rotate mp4 file with ffmpeg without re-encoding.
+
+```sh
+filename=rotate-ffmpeg.sh
+```
+
 ## List Functions
 
 ### ArrayDiff
@@ -181,7 +194,7 @@ Shift an element from the array by its key/index number.
 filename=array-unset.function.sh
 ```
 
-### VarDump()
+### VarDump
 
 Variable Dump for Debugging.
 
