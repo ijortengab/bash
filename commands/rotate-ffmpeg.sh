@@ -1,8 +1,8 @@
 #!/bin/bash
 
-[ -z $1 ] && { echo Variable filename required.; exit 1; }
-[ -f $1 ] || { echo filename not exists; exit 1; }
-[ -z $2 ] && { echo Variable rotate degree required; exit 1; }
+[ -z "$1" ] && { echo Variable filename required.; exit 1; }
+[ -f "$1" ] || { echo filename not exists; exit 1; }
+[ -z "$2" ] && { echo Variable rotate degree required; exit 1; }
 command -v "ffmpeg" >/dev/null || { echo "ffmpeg command not found."; exit 1; }
 
 input="$1"
