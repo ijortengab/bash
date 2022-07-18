@@ -87,6 +87,7 @@ VarDump() {
         if [[ $1 =~ ^\<.*\> ]];then
             label=$(echo $1 | cut -d'>' -f1 | cut -c2-)
             value=$(echo $1 | cut -d'>' -f2 )
+            value=${value//\\/\\\\} # Backslash to Double Backslash
             printf "${cyan}$label${normal}${red} = ${normal}"
             printf "\"${yellow}$value${normal}\" \n"
             shift
@@ -94,19 +95,22 @@ VarDump() {
         fi
         # Jika argument tidak valid sebagai parameter.
         if [[ $1 =~ [^0-9a-zA-Z_] || $1 =~ ^[0-9] ]];then
-            printf "${magenta}$1${normal}\n"
+            value=${1//\\/\\\\} # Backslash to Double Backslash
+            printf "${magenta}$value${normal}\n"
             shift
             continue
         fi
         # Check variable jika merupakan associative array.
-        eval check=\$\(declare -p $1\)
+        eval check=\$\(declare -p $1 2>/dev/null\)
         if [[ "$check" =~ "declare -A" ]]; then
             eval globalVarKey=\(\"\${!$1[@]}\"\)
             eval globalVarValue=\(\"\${$1[@]}\"\)
             printf "${cyan}\$$1${normal}${red} = ( ${normal}"
             for i in "${!globalVarKey[@]}"
             do
-                printf "\"${cyan}${globalVarKey[$i]}${normal}\" ${red}=>${normal} \"${yellow}${globalVarValue[$i]}${normal}\" "
+                value="${globalVarValue[$i]}"
+                value=${value//\\/\\\\} # Backslash to Double Backslash
+                printf "\"${cyan}${globalVarKey[$i]}${normal}\" ${red}=>${normal} \"${yellow}${value}${normal}\" "
             done
             printf "${red})${normal}\n"
             shift
@@ -115,7 +119,8 @@ VarDump() {
         # Check jika variable tidak pernah diset.
         eval isset=\$\(if \[ -z \$\{$1+x\} \]\; then echo 0\; else echo 1\; fi\)
         if [ $isset == 0 ];then
-            printf "${yellow}$1${normal}\n"
+            value=${1//\\/\\\\} # Backslash to Double Backslash
+            printf "${yellow}${value}${normal}\n"
             shift
             continue
         fi
@@ -125,7 +130,9 @@ VarDump() {
             eval globalVarValue=\(\"\${$1[@]}\"\)
             printf "${cyan}\$$1${normal}${red} = ( ${normal}"
             for (( i=0; i < ${#globalVarValue[@]} ; i++ )); do
-                printf "\"${yellow}${globalVarValue[$i]}${normal}\" "
+                value="${globalVarValue[$i]}"
+                value=${value//\\/\\\\} # Backslash to Double Backslash
+                printf "\"${yellow}${value}${normal}\" "
             done
             printf "${red})${normal}\n"
             shift
@@ -134,8 +141,9 @@ VarDump() {
         # Variable selain itu.
         globalVarName=$1
         globalVarValue=${!globalVarName}
+        value=${globalVarValue//\\/\\\\}
         printf "${cyan}\$$globalVarName${normal}${red} = ${normal}"
-        printf "\"${yellow}$globalVarValue${normal}\" \n"
+        printf "\"${yellow}${value}${normal}\" \n"
         shift
     done
 }
