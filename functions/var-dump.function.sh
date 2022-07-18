@@ -98,6 +98,20 @@ VarDump() {
             shift
             continue
         fi
+        # Check variable jika merupakan associative array.
+        eval check=\$\(declare -p $1\)
+        if [[ "$check" =~ "declare -A" ]]; then
+            eval globalVarKey=\(\"\${!$1[@]}\"\)
+            eval globalVarValue=\(\"\${$1[@]}\"\)
+            printf "${cyan}\$$1${normal}${red} = ( ${normal}"
+            for i in "${!globalVarKey[@]}"
+            do
+                printf "\"${cyan}${globalVarKey[$i]}${normal}\" ${red}=>${normal} \"${yellow}${globalVarValue[$i]}${normal}\" "
+            done
+            printf "${red})${normal}\n"
+            shift
+            continue
+        fi
         # Check jika variable tidak pernah diset.
         eval isset=\$\(if \[ -z \$\{$1+x\} \]\; then echo 0\; else echo 1\; fi\)
         if [ $isset == 0 ];then
