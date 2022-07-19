@@ -101,7 +101,7 @@ VarDump() {
             continue
         fi
         # Check variable jika merupakan associative array.
-        eval check=\$\(declare -p $1 2>/dev/null\)
+        eval check=\$\(declare -p $1 2\>\/dev\/null\)
         if [[ "$check" =~ "declare -A" ]]; then
             eval globalVarKey=\(\"\${!$1[@]}\"\)
             eval globalVarValue=\(\"\${$1[@]}\"\)
