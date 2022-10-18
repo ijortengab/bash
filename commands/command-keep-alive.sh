@@ -70,7 +70,7 @@ while true; do
         echo $pid
         while kill -0 $pid 2>/dev/null
         do
-            sleep .1
+            sleep 60
         done
         echo PID $pid was terminated. >&2
     fi
