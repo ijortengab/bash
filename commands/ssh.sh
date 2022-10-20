@@ -11,10 +11,10 @@ if [[ "$filename" == 'ssh' ]];then
         cat <<EOL >&2
 Usage:
 
-  ssh.sh list
-  ssh.sh create <filename>
-  ssh.sh rename <filename> <newfilename>
-  ssh.sh delete <filename>
+  ssh.sh list|l
+  ssh.sh create|c <filename>
+  ssh.sh rename|r <filename> <newfilename>
+  ssh.sh delete|d <filename>
 
 Then use <filename> as a command to generate and execute ssh command.
 
@@ -34,12 +34,12 @@ This script usually to create ssh tunneling with local/remote/dynamic port forwa
 EOL
     }
     case $1 in
-        list)
+        list|l)
             source="$0"
             dirname=$(dirname "$0")
             find -L "$dirname" -samefile "$0" | grep -v ssh.sh
         ;;
-        create)
+        create|c)
             [ -z "$2" ] && { echo "Missing Argument." >&2; exit 1; }
             source="$0"
             dirname=$(dirname "$0")
@@ -60,7 +60,7 @@ EOL
             ln -sf "$source" "$target"
             echo Link created. >&2
         ;;
-        delete)
+        delete|d)
             [ -z "$2" ] && { echo "Missing Argument." >&2; exit 1; }
             source="$0"
             dirname=$(dirname "$0")
@@ -73,7 +73,7 @@ EOL
                 echo Link not found. >&2
             fi
         ;;
-        rename)
+        rename|r)
             [ -z "$2" ] && { echo "Missing Argument." >&2; exit 1; }
             [ -z "$3" ] && { echo "Missing Argument." >&2; exit 1; }
             source="$0"
