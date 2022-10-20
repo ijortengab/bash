@@ -43,7 +43,19 @@ EOL
             [ -z "$2" ] && { echo "Missing Argument." >&2; exit 1; }
             source="$0"
             dirname=$(dirname "$0")
-            target="${dirname}/$2"
+            target="$2"
+            local_port=$(grep -Eo '\.lport-[^.]+' <<< "$2" | sed -E 's/\.lport-(.*)/\1/')
+            if [[ $local_port == 'auto' ]];then
+                last=$(find -L "$dirname" -samefile "$0" | grep -v ssh.sh |  grep -o -P 'lport-\K(\d+)' | sort | tail -n1)
+                [ -z "$last" ] && last=10000
+                if [ $last -lt 10000 ];then
+                    next=$(( last + 10000 ))
+                else
+                    next=$(( last + 1 ))
+                fi
+                target=$(sed "s/lport-auto/lport-${next}/"  <<< "$target")
+            fi
+            target="${dirname}/$target"
             echo ln -sf \""$source"\" \""$target"\"
             ln -sf "$source" "$target"
             echo Link created. >&2
