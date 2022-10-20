@@ -6,15 +6,15 @@ if [[ ${filename:(-3)} == '.sh' ]];then
     filename=${filename:0:(-3)}
 fi
 
-if [[ "$filename" == 'ssh-command-generator' ]];then
+if [[ "$filename" == 'ssh' ]];then
     Usage() {
         cat <<EOL >&2
 Usage:
 
-  ssh-command-generator.sh list
-  ssh-command-generator.sh create <filename>
-  ssh-command-generator.sh rename <filename> <newfilename>
-  ssh-command-generator.sh delete <filename>
+  ssh.sh list
+  ssh.sh create <filename>
+  ssh.sh rename <filename> <newfilename>
+  ssh.sh delete <filename>
 
 Then use <filename> as a command to generate and execute ssh command.
 
@@ -37,7 +37,7 @@ EOL
         list)
             source="$0"
             dirname=$(dirname "$0")
-            find -L "$dirname" -samefile "$0" | grep -v ssh-command-generator.sh
+            find -L "$dirname" -samefile "$0" | grep -v ssh.sh
         ;;
         create)
             [ -z "$2" ] && { echo "Missing Argument." >&2; exit 1; }
