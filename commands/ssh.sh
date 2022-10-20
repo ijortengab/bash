@@ -19,16 +19,19 @@ Usage:
 Then use <filename> as a command to generate and execute ssh command.
 
 Example of <filename>:
- - pil-go
- - pil-rpf.rport-12257.lport-22
- - pcfaris-dpf.lport-9090
- - pcdina-lpf.rport-rdp.lport-11300.triggerusehost
- - pcpuji-lpf.rport-rdp.lport-10302.triggerusehost.from-pchadi
- - pcfarah-lpf.rport-vnc.lport-10901.noloopback
- - pcfaris-lpf.rport-ssh.lport-10002
- - pcroni-lpf.rport-vpn.lport-11103.noloopback.triggerusehost
- - cctv3-lpf.rport-http.lport-20102.jump-p.from-pcpuji
- - s-lpf.rport-mysql.lport-30100
+ - pil,go
+ - pil,rpf.rport,12257.lport,22
+ - pcfaris,dpf.lport,9090
+ - pcdina,lpf.rport,rdp.lport,11300.triggerusehost
+ - pcpuji,lpf.rport,rdp.lport,10302.triggerusehost.from,pchadi
+ - pcfarah,lpf.rport,vnc.lport,10901.noloopback
+ - pcfaris,lpf.rport,ssh.lport,10002
+ - pcroni,lpf.rport,vpn.lport,11103.noloopback.triggerusehost
+ - cctv3,lpf.rport,http.lport,20102.jump,p.from,pcpuji
+ - s,lpf.rport,mysql.lport,30100
+ - pcfaris,lpf.rport,33899.lport,10001.trigger,rdp
+ - pcfaris,lpf.rport,ssh.lport,10002.trigger,no
+ - pcroni,lpf.rport,9090.lport,11104.trigger,http.from,pcfaris
 
 This script usually to create ssh tunneling with local/remote/dynamic port forwarding.
 EOL
@@ -44,16 +47,16 @@ EOL
             source="$0"
             dirname=$(dirname "$0")
             target="$2"
-            local_port=$(grep -Eo '\.lport-[^.]+' <<< "$2" | sed -E 's/\.lport-(.*)/\1/')
+            local_port=$(grep -Eo '\.lport,[^.]+' <<< "$2" | sed -E 's/\.lport,(.*)/\1/')
             if [[ $local_port == 'auto' ]];then
-                last=$(find -L "$dirname" -samefile "$0" | grep -v ssh.sh |  grep -o -P 'lport-\K(\d+)' | sort | tail -n1)
+                last=$(find -L "$dirname" -samefile "$0" | grep -v ssh.sh |  grep -o -P 'lport,\K(\d+)' | sort | tail -n1)
                 [ -z "$last" ] && last=10000
                 if [ $last -lt 10000 ];then
                     next=$(( last + 10000 ))
                 else
                     next=$(( last + 1 ))
                 fi
-                target=$(sed "s/lport-auto/lport-${next}/"  <<< "$target")
+                target=$(sed "s/lport,auto/lport,${next}/"  <<< "$target")
             fi
             target="${dirname}/$target"
             echo ln -sf \""$source"\" \""$target"\"
@@ -137,8 +140,8 @@ getIP() {
 
 # Variable diambil dari filename.
 head=$(echo "$filename" | cut -d'.' -f 1)
-host=$(echo "$head" | cut -d'-' -f 1)
-variant=$(echo "$head" | cut -d'-' -f 2)
+host=$(echo "$head" | cut -d',' -f 1)
+variant=$(echo "$head" | cut -d',' -f 2)
 
 # Spasi harus single agar sama dengan isi di file /proc/${pid}/cmdline
 CMD=$(cat <<- EOL
@@ -157,12 +160,12 @@ case "$variant" in
         ;;
     lpf|rpf)
         OPTION=
-        remote_port=$(grep -Eo '\.rport-[^.]+' <<< "$filename" | sed -E 's/\.rport-(.*)/\1/')
+        remote_port=$(grep -Eo '\.rport,[^.]+' <<< "$filename" | sed -E 's/\.rport,(.*)/\1/')
         remote_port=$(translatePort "$remote_port")
-        local_port=$(grep -Eo '\.lport-[^.]+' <<< "$filename" | sed -E 's/\.lport-(.*)/\1/')
+        local_port=$(grep -Eo '\.lport,[^.]+' <<< "$filename" | sed -E 's/\.lport,(.*)/\1/')
         local_port=$(translatePort "$local_port")
-        from=$(grep -Eo '\.from-[^.]+' <<< "$filename" | sed -E 's/\.from-(.*)/\1/')
-        jump=$(grep -Eo '\.jump-[^.]+' <<< "$filename" | sed -E 's/\.jump-(.*)/\1/')
+        from=$(grep -Eo '\.from,[^.]+' <<< "$filename" | sed -E 's/\.from,(.*)/\1/')
+        jump=$(grep -Eo '\.jump,[^.]+' <<< "$filename" | sed -E 's/\.jump,(.*)/\1/')
         noloopback=$(grep -Eo '\.noloopback(\.|$)' <<< "$filename")
         ip="127.0.0.1"
         [ -n "$jump" ] && OPTION+="-J $jump "
@@ -196,7 +199,7 @@ case "$variant" in
         esac
         ;;
     dpf)
-        local_port=$(grep -Eo '\.lport-[^.]+' <<< "$filename" | sed -E 's/\.lport-(.*)/\1/')
+        local_port=$(grep -Eo '\.lport,[^.]+' <<< "$filename" | sed -E 's/\.lport,(.*)/\1/')
         HOST="$host"
         OPTION+="-fN -D $local_port"
         ;;
@@ -233,7 +236,7 @@ if [[ -z "$target_port" ]];then
     exit
 fi
 
-trigger=$(grep -Eo '\.trigger-[^.]+' <<< "$filename" | sed -E 's/\.trigger-(.*)/\1/')
+trigger=$(grep -Eo '\.trigger,[^.]+' <<< "$filename" | sed -E 's/\.trigger,(.*)/\1/')
 [ -n "$trigger" ] || trigger=auto
 if [[ $trigger == no ]];then
     exit
