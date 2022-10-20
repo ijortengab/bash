@@ -138,6 +138,11 @@ getIP() {
     ' ~/.ssh/config
 }
 
+while [[ $# -gt 0 ]]; do
+    filename+=".${1}"
+    shift
+done
+
 # Variable diambil dari filename.
 head=$(echo "$filename" | cut -d'.' -f 1)
 host=$(echo "$head" | cut -d',' -f 1)
@@ -161,11 +166,15 @@ case "$variant" in
     lpf|rpf)
         OPTION=
         remote_port=$(grep -Eo '\.rport,[^.]+' <<< "$filename" | sed -E 's/\.rport,(.*)/\1/')
+        remote_port=$(tail -n1 <<< "$remote_port")
         remote_port=$(translatePort "$remote_port")
         local_port=$(grep -Eo '\.lport,[^.]+' <<< "$filename" | sed -E 's/\.lport,(.*)/\1/')
+        local_port=$(tail -n1 <<< "$local_port")
         local_port=$(translatePort "$local_port")
         from=$(grep -Eo '\.from,[^.]+' <<< "$filename" | sed -E 's/\.from,(.*)/\1/')
+        from=$(tail -n1 <<< "$from")
         jump=$(grep -Eo '\.jump,[^.]+' <<< "$filename" | sed -E 's/\.jump,(.*)/\1/')
+        jump=$(tail -n1 <<< "$jump")
         noloopback=$(grep -Eo '\.noloopback(\.|$)' <<< "$filename")
         ip="127.0.0.1"
         [ -n "$jump" ] && OPTION+="-J $jump "
@@ -200,6 +209,7 @@ case "$variant" in
         ;;
     dpf)
         local_port=$(grep -Eo '\.lport,[^.]+' <<< "$filename" | sed -E 's/\.lport,(.*)/\1/')
+        local_port=$(tail -n1 <<< "$local_port")
         HOST="$host"
         OPTION+="-fN -D $local_port"
         ;;
@@ -237,6 +247,8 @@ if [[ -z "$target_port" ]];then
 fi
 
 trigger=$(grep -Eo '\.trigger,[^.]+' <<< "$filename" | sed -E 's/\.trigger,(.*)/\1/')
+trigger=$(tail -n1 <<< "$trigger")
+
 [ -n "$trigger" ] || trigger=auto
 if [[ $trigger == no ]];then
     exit
