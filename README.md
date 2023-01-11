@@ -13,6 +13,7 @@ filename=tester.sh
 filename=ttw.sh
 filename=ssh-command-generator.sh
 filename=rotate-ffmpeg.sh
+filename=gpl-nginx-static.sh
 ```
 
 2. Download then put command in `$PATH`.
