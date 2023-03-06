@@ -6,6 +6,8 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h) help=1; shift ;;
+        --digitalocean-a-record=*) digitalocean_a_record+=("${1#*=}"); shift ;;
+        --digitalocean-a-record) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then digitalocean_a_record+=("$2"); shift; fi; shift ;;
         --digitalocean-credentials=*|-D=*) digitalocean_credentials="${1#*=}"; shift ;;
         --digitalocean-credentials|-D) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then digitalocean_credentials="$2"; shift; fi; shift ;;
         --domain=*|-d=*) domain+=("${1#*=}"); shift ;;
@@ -67,6 +69,11 @@ Usage:
   gpl-nginx-static.sh example.com -d example.org -d example.net
   gpl-nginx-static.sh test.com \
     -d test.local -D <(cat ~/.token-digitalocean.txt) -L digitalocean -I auto
+  gpl-nginx-static.sh \
+    drupal.my.id system -d '*.system.drupal.my.id' \
+    --digitalocean-a-record=system \
+    --digitalocean-a-record='*.system' \
+    -D <(cat ~/.token-digitalocean.txt) -I auto
 
 Options:
   -h --help                   Show this help.
@@ -80,6 +87,8 @@ Options:
   -D --digitalocean-credentials
                               Text file that contains token string which used
                               to access Digitalocean API.
+  --digitalocean-a-record     Add A record with Digitalocean API.
+                              Value must part of subdomain only.
   -L --letsencrypt[=<value>]  Use letsencrypt to setup TLS/SSL for HTTPS.
                               Available value is:
                               - `digitalocean`
@@ -173,6 +182,15 @@ magenta subdomain="$subdomain"
     magenta 'domains=('${_value:1}')'
 } || {
     magenta 'domains=()'
+}
+[ ${#digitalocean_a_record[@]} -gt 0 ] && {
+    _value=
+    for (( i=0; i < ${#digitalocean_a_record[@]} ; i++ )); do
+        _value+=" \"${digitalocean_a_record[$i]}\""
+    done
+    magenta 'digitalocean_a_record=('${_value:1}')'
+} || {
+    magenta 'digitalocean_a_record=()'
 }
 magenta fqdn="$fqdn"
 magenta web_root="$web_root"
@@ -596,15 +614,15 @@ if [[ -n "$domain" && -n "$digitalocean_credentials" && -n "$ip_address" ]];then
     fi
     ____
 
-    if [ -n "$subdomain" ];then
-        yellow Modify A DNS Record for Domain '`'${fqdn}'`'
-        if isRecordExist A $domain $fqdn $ip_address;then
-            __ DNS A Record of '`'${fqdn}'`' point to IP '`'${ip_address}'`' found in DNS Digital Ocean.
-        elif insertRecord A $domain $subdomain $ip_address;then
-            __; green DNS A Record of '`'${fqdn}'`' point to IP '`'${ip_address}'`' created in DNS Digital Ocean.
+    for string in "${digitalocean_a_record[@]}" ;do
+        yellow Modify A DNS Record for Domain '`'${string}.${domain}'`'
+        if isRecordExist A $domain "${string}.${domain}" $ip_address;then
+            __ DNS A Record of '`'"${string}.${domain}"'`' point to IP '`'${ip_address}'`' found in DNS Digital Ocean.
+        elif insertRecord A $domain $string $ip_address;then
+            __; green DNS A Record of '`'"${string}.${domain}"'`' point to IP '`'${ip_address}'`' created in DNS Digital Ocean.
         fi
         ____
-    fi
+    done
 fi
 
 if [[ -n "$domain" && -n "$letsencrypt" ]];then
@@ -791,5 +809,6 @@ FLAG_VALUE=(
 )
 MULTIVALUE=(
 '--domain|-d'
+'--digitalocean-a-record'
 )
 EOF
