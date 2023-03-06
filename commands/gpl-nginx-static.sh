@@ -61,6 +61,9 @@ Gak Pake Lama Nginx Static
 
 Usage:
   gpl-nginx-static.sh <domain>
+  gpl-nginx-static.sh <domain> <subdomain>
+  gpl-nginx-static.sh example.com sso \
+    -d test.sso.example.com -d devel.sso.example.com
   gpl-nginx-static.sh example.com -d example.org -d example.net
   gpl-nginx-static.sh test.com \
     -d test.local -D <(cat ~/.token-digitalocean.txt) -L digitalocean -I auto
@@ -102,21 +105,28 @@ ____() { echo; }
 
 # Argument.
 _domain="$1"
+subdomain="$2"
 if [ -z "$_domain" ];then
     read -p "<domain>: " _domain
 fi
 [ -n "$_domain" ] || { red "Argument <domain> required."; x; }
 [[ $_domain = *" "* ]] && { red "Argument <domain> can not contain space."; x; }
-[ -n "$_domain" ] && {
-    if ! grep -q -P '(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)' <<< "$_domain";then
-        red "Argument <domain> contains invalid characters."; x
+if ! grep -q -P '(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)' <<< "$_domain";then
+    red "Argument <domain> contains invalid characters."; x
+fi
+[ -n "$subdomain" ] && {
+    [[ $subdomain = *" "* ]] && { red "Argument <subdomain> can not contain space."; x; }
+    if ! grep -q -P '(?=^.{1,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{0,})$)' <<< "$subdomain";then
+        red "Argument <subdomain> contains invalid characters."; x
     fi
 }
 
 # Populate value.
 domains=("${domain[@]}")
 domain="$_domain"
-[ -n "$web_root" ] || { web_root='/var/www/project/'$domain'/web'; }
+fqdn="$domain"
+[ -n "$subdomain" ] && fqdn="${subdomain}.${domain}"
+[ -n "$web_root" ] || { web_root='/var/www/project/'$fqdn'/web'; }
 [[ "${web_root:0:1}" == '/' ]] || {
     web_root="/var/www/${web_root}"
 }
@@ -127,7 +137,7 @@ if [ "$ip_address" == 'auto' ];then
     ip_address=$(wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/")
     [ -n "$ip_address" ] || { red "The value of ip_address failed to autopopulate."; x; }
 fi
-[ -n "$nginx_config_filename" ] || { nginx_config_filename=$domain; }
+[ -n "$nginx_config_filename" ] || { nginx_config_filename=$fqdn; }
 [[ $nginx_config_filename = *" "* ]] && { red "The value of --nginx-config-filename can not contain space."; x; }
 nginx_config_filename_safe_value=$(sed -E 's|[^-.a-zA-Z0-9]|_|g' <<< "$nginx_config_filename" | sed -E 's|_+|_|g' )
 if [[ ! $nginx_config_filename == $nginx_config_filename_safe_value ]];then
@@ -146,7 +156,7 @@ blue '#                                                                    #'
 blue '######################################################################'
 ____
 
-e Version 0.1.0
+e Version 0.1.1
 ____
 
 yellow -- START -------------------------------------------------------------
@@ -154,6 +164,7 @@ ____
 
 yellow User variable.
 magenta domain="$domain"
+magenta subdomain="$subdomain"
 [ ${#domains[@]} -gt 0 ] && {
     _value=
     for (( i=0; i < ${#domains[@]} ; i++ )); do
@@ -163,11 +174,13 @@ magenta domain="$domain"
 } || {
     magenta 'domains=()'
 }
+magenta fqdn="$fqdn"
 magenta web_root="$web_root"
 magenta nginx_config_filename="$nginx_config_filename"
 magenta letsencrypt="$letsencrypt"
 magenta digitalocean_credentials="$digitalocean_credentials"
 magenta ip_address="$ip_address"
+
 ____
 
 MAILBOX_HOST=postmaster
@@ -385,7 +398,7 @@ server {
     root WEB_ROOT;
     index index.html;
     autoindex off;
-    server_name DOMAIN;
+    server_name FQDN;
     location / {
         try_files $uri $uri/ =404;
     }
@@ -393,7 +406,7 @@ server {
 EOF
     sudo -u $user_nginx HOME='/tmp' -s touch "${web_root}/index.html"
     sed -i "s|WEB_ROOT|${web_root}|g" "$config_path"
-    sed -i "s|DOMAIN|${domain}|g" "$config_path"
+    sed -i "s|FQDN|${fqdn}|g" "$config_path"
     cd /etc/nginx/sites-enabled/
     ln -sf ../sites-available/$nginx_config_filename
     reload=1
@@ -402,7 +415,7 @@ EOF
 fi
 
 yellow Mengecek domain di nginx config.
-allsite=("$domain" "${domains[@]}")
+allsite=("$fqdn" "${domains[@]}")
 for string in "${allsite[@]}" ;do
     notfound=
     string_quoted=$(pregQuote "$string")
@@ -437,11 +450,11 @@ if [ -n "$reload" ];then
 fi
 
 yellow Mengecek HTTP Response Code.
-magenta curl http://127.0.0.1 -H '"'Host: ${domain}'"'
+magenta curl http://127.0.0.1 -H '"'Host: ${fqdn}'"'
 code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \
-    http://127.0.0.1 -H "Host: ${domain}")
-[ $code -eq 200 ] && {
+    http://127.0.0.1 -H "Host: ${fqdn}")
+[[ $code == 200 || $code =~ 30.? ]] && {
     __ HTTP Response code '`'$code'`' '('Required')'.
 } || {
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
@@ -582,11 +595,20 @@ if [[ -n "$domain" && -n "$digitalocean_credentials" && -n "$ip_address" ]];then
         __; green DNS A Record of '`'${domain}'`' point to IP '`'${ip_address}'`' created in DNS Digital Ocean.
     fi
     ____
+
+    if [ -n "$subdomain" ];then
+        yellow Modify A DNS Record for Domain '`'${fqdn}'`'
+        if isRecordExist A $domain $fqdn $ip_address;then
+            __ DNS A Record of '`'${fqdn}'`' point to IP '`'${ip_address}'`' found in DNS Digital Ocean.
+        elif insertRecord A $domain $subdomain $ip_address;then
+            __; green DNS A Record of '`'${fqdn}'`' point to IP '`'${ip_address}'`' created in DNS Digital Ocean.
+        fi
+        ____
+    fi
 fi
 
 if [[ -n "$domain" && -n "$letsencrypt" ]];then
     aptinstalled=$(apt --installed list 2>/dev/null)
-
     yellow Mengecek apakah snap installed.
     notfound=
     if grep -q "^snapd/" <<< "$aptinstalled";then
@@ -717,9 +739,9 @@ if [[ -n "$domain" && -n "$letsencrypt" ]];then
         red Lets encrypt require Digital Ocean API Token.;
     fi
     if [[ "$letsencrypt" == 'digitalocean' && -n "$digitalocean_credentials" ]];then
-        yellow Certbot Request for '`'$domain'`'
-        if [ -d /etc/letsencrypt/live/"$domain" ];then
-            __ Certificate berada pada direktori '`'/etc/letsencrypt/live/$domain/'`'
+        yellow Certbot Request for '`'$fqdn'`'
+        if [ -d /etc/letsencrypt/live/"$fqdn" ];then
+            __ Certificate berada pada direktori '`'/etc/letsencrypt/live/$fqdn/'`'
         else
             __ Save DigitalOcean Token as File
             mktemp=$(mktemp -t digitalocean.XXXXXX.ini)
@@ -728,12 +750,12 @@ if [[ -n "$domain" && -n "$letsencrypt" ]];then
 dns_digitalocean_token = $digitalocean_credentials
 EOF
             __; fileMustExists "$mktemp"
-            __; magenta certbot -i nginx -d "$domain"
+            __; magenta certbot -i nginx -d "$fqdn"
             certbot -i nginx \
                -n --agree-tos --email "${MAILBOX_HOST}@${domain}" \
                --dns-digitalocean \
                --dns-digitalocean-credentials "$mktemp" \
-               -d "$domain"
+               -d "$fqdn"
             __ Cleaning File Temporary
             __; magenta rm "$mktemp"
             rm "$mktemp"
