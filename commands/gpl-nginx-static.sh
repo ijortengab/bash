@@ -112,6 +112,41 @@ _() { echo -n "$@"; }
 __() { echo -n '    '; [ -n "$1" ] && echo "$@" || echo -n ; }
 ____() { echo; }
 
+# Removes duplicate values from an array.
+#
+# Globals:
+#   Modified: _return
+#
+# Arguments:
+#   1 = Parameter of the input array.
+#
+# Returns:
+#   None
+#
+# Example:
+#   ```
+#   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
+#   ArrayUnique my[@]
+#   # Get result in variable `$_return`.
+#   # _return=("cherry" "manggo" "blackberry")
+#   ```
+ArrayUnique() {
+    local e source=("${!1}")
+    # inArray is alternative of ArraySearch.
+    inArray () {
+        local e match="$1"
+        shift
+        for e; do [[ "$e" == "$match" ]] && return 0; done
+        return 1
+    }
+    _return=()
+    for e in "${source[@]}";do
+        if ! inArray "$e" "${_return[@]}";then
+            _return+=("$e")
+        fi
+    done
+}
+
 # Argument.
 _domain="$1"
 subdomain="$2"
@@ -134,7 +169,10 @@ fi
 domains=("${domain[@]}")
 domain="$_domain"
 fqdn="$domain"
-[ -n "$subdomain" ] && fqdn="${subdomain}.${domain}"
+[ -n "$subdomain" ] && {
+    fqdn="${subdomain}.${domain}";
+    digitalocean_a_record+=("${subdomain}");
+}
 [ -n "$web_root" ] || { web_root='/var/www/project/'$fqdn'/web'; }
 [[ "${web_root:0:1}" == '/' ]] || {
     web_root="/var/www/${web_root}"
@@ -157,6 +195,13 @@ if [[ -n "$digitalocean_credentials" && -z "$ip_address" ]];then
     magenta ip_address="$ip_address"
     red "Using API DigitalOcean DNS required \$ip_address value."; x
 fi
+
+ArrayUnique digitalocean_a_record[@]
+digitalocean_a_record=("${_return[@]}")
+unset _return
+ArrayUnique domains[@]
+domains=("${_return[@]}")
+unset _return
 
 blue '######################################################################'
 blue '#                                                                    #'
@@ -198,7 +243,6 @@ magenta nginx_config_filename="$nginx_config_filename"
 magenta letsencrypt="$letsencrypt"
 magenta digitalocean_credentials="$digitalocean_credentials"
 magenta ip_address="$ip_address"
-
 ____
 
 MAILBOX_HOST=postmaster
