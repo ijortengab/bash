@@ -14,6 +14,9 @@ fi
 
 echo $$ > "$pidfile"
 
+echo '[notice]' Process ID:"$$". >&2
+echo '[notice]' PID file:"$pidfile". >&2
+
 basename=$(basename $0)
 
 getPid() {
@@ -54,6 +57,8 @@ cleaning() {
 trap cleaning SIGTERM
 trap cleaning SIGINT
 
+declare -i count
+count=0
 while true; do
     pid=$(getPid "$command" "$CMD")
     if [[ $pid == '' ]];then
@@ -63,7 +68,14 @@ while true; do
         pid=$(getPid "$command" "$CMD")
     fi
     if [[ $pid == '' ]];then
-        echo PID not found. >&2
+        count+=1
+        echo PID not found '('$count')'. >&2
+        if [ $count -eq 60 ];then
+            echo '[notice] Timeout, wait a minute.' >&2
+            echo '[notice] Stop process with execute: `'kill $$'`.' >&2
+            sleep 59
+            count=0
+        fi
         sleep 1
     else
         echo -n 'PID: ' >&2
