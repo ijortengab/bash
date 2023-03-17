@@ -19,7 +19,7 @@ basename=$(basename $0)
 getPid() {
     if [[ $(uname) == "Linux" ]];then
         # pid=$(ps aux | grep "$2" | grep -v grep | awk '{print $2}')
-        pid=$(ps aux | grep "$1" | grep -v grep | grep -v "$basename" | grep "$2" | awk '{print $2}')
+        pid=$(ps -u $USER -U $USER x | grep "$1" | grep -v grep | grep -v "$basename" | grep "$2" | awk '{print $1}')
         echo $pid
     elif [[ $(uname | cut -c1-6) == "CYGWIN" ]];then
         local pid command ifs
