@@ -41,6 +41,7 @@ EOL
             source="$0"
             dirname=$(dirname "$0")
             find -L "$dirname" -samefile "$0" | grep -v ssh.sh
+            exit
         ;;
         create|c)
             [ -z "$2" ] && { echo "Missing Argument." >&2; exit 1; }
@@ -49,7 +50,7 @@ EOL
             target="$2"
             local_port=$(grep -Eo '\.lport,[^.]+' <<< "$2" | sed -E 's/\.lport,(.*)/\1/')
             if [[ $local_port == 'auto' ]];then
-                last=$(find -L "$dirname" -samefile "$0" | grep -v ssh.sh |  grep -o -P 'lport,\K(\d+)' | sort | tail -n1)
+                last=$(find -L "$dirname" -samefile "$0" | grep -v ssh.sh |  grep -o -P 'lport,\K(\d+)' | sort -n | tail -n1)
                 [ -z "$last" ] && last=10000
                 if [ $last -lt 10000 ];then
                     next=$(( last + 10000 ))
@@ -62,6 +63,7 @@ EOL
             echo ln -sf \""$source"\" \""$target"\"
             ln -sf "$source" "$target"
             echo Link created. >&2
+            exit
         ;;
         delete|d)
             [ -z "$2" ] && { echo "Missing Argument." >&2; exit 1; }
@@ -75,6 +77,7 @@ EOL
             else
                 echo Link not found. >&2
             fi
+            exit
         ;;
         rename|r)
             [ -z "$2" ] && { echo "Missing Argument." >&2; exit 1; }
@@ -90,11 +93,15 @@ EOL
             else
                 echo Link not found. >&2
             fi
+            exit
+        ;;
+        execute|x)
+            filename="$2"
         ;;
         *)
             Usage
+            exit
     esac
-    exit
 fi
 
 getPid() {
