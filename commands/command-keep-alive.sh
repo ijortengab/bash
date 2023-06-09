@@ -37,15 +37,15 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Command.
+# Operand.
 command="$1"; shift
 
 # Functions.
 printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 printHelp() {
-    cat << 'EOF' >&2
+    cat << 'EOF'
 Usage: command-keep-alive.sh <command> [options]'
 
 Options:
@@ -53,6 +53,12 @@ Options:
         Set the pid file.
    --timeout-trigger-command
         Command to execute if timeout triggered.
+
+Global Options:
+   --version
+        Print version of this script.
+   --help
+        Show this help.
 EOF
 }
 
@@ -63,21 +69,25 @@ EOF
 
 # Functions.
 getPid() {
+    local command="$1" command_0 command_clean
+    command_0=$(echo "$command" | cut -d' ' -f1)
+    command_clean=${command%&} # remove suffix ampersand.
+    command_clean=$(xargs <<< "$command_clean")
     # Global used: $USER, $IFS.
     if [[ $(uname) == "Linux" ]];then
         local pid
         [ -z "$USER" ] && USER=$(whoami)
         basename=$(basename "$__FILE__")
-        pid=$(ps -u $USER -U $USER x | grep "$1" | grep -v grep | grep -v "$basename" | grep "$2" | awk '{print $1}')
+        pid=$(ps -u $USER -U $USER x | grep "$command_0" | grep -v grep | grep -v "$basename" | grep "$command_clean" | awk '{print $1}')
         echo $pid
     elif [[ $(uname | cut -c1-6) == "CYGWIN" ]];then
         local pid command ifs
         ifs=$IFS
-        ps -s | grep "$1" | awk '{print $1}' | while IFS= read -r pid; do\
+        ps -s | grep "$command_0" | awk '{print $1}' | while IFS= read -r pid; do \
             command=$(cat /proc/${pid}/cmdline | tr '\0' ' ')
             command=$(echo "$command" | sed 's/\ $//')
             IFS=$ifs
-            if [[ "$command" == "$2" ]];then
+            if [[ "$command" == "$command_clean" ]];then
                 echo $pid
                 break
             fi
@@ -88,9 +98,8 @@ getPid() {
 cleaning() {
     # Global used: $pid_file.
     local pid
-    echo # break printr \r
     echo $(date +%Y%m%d-%H%M%S) '[cleaning]' Triggered. >&2
-    pid=$(getPid "$command_0" "$command")
+    pid=$(getPid "$command")
     if [[ $pid == '' ]];then
         echo $(date +%Y%m%d-%H%M%S) '[cleaning]' PID not found. >&2
     else
@@ -104,7 +113,6 @@ cleaning() {
 # Require, validate, and populate value.
 __FILE__=$(realpath "$0")
 [ -z "$pid_file" ] &&  pid_file=$(mktemp -p /tmp command-keep-alive.XXXXXX.pid)
-command_0=$(echo "$command" | cut -d' ' -f1)
 
 # Execute.
 trap cleaning SIGTERM
@@ -115,19 +123,19 @@ echo $(date +%Y%m%d-%H%M%S) '[notice]' PID file:' '$pid_file. >&2
 declare -i count
 count=0
 while true; do
-    pid=$(getPid "$command_0" "$command")
+    pid=$(getPid "$command")
     if [[ $pid == '' ]];then
         echo $(date +%Y%m%d-%H%M%S) '[execute]' "$command" >&2
         echo "$command" | sh
         echo $(date +%Y%m%d-%H%M%S) '[notice]' Exit code: $? >&2
-        pid=$(getPid "$command_0" "$command")
+        pid=$(getPid "$command")
     fi
     if [[ $pid == '' ]];then
         count+=1
-        echo $(date +%Y%m%d-%H%M%S) '[notice]' PID of command not found '('$count')'. >&2
+        echo $(date +%Y%m%d-%H%M%S) '[notice]' PID of command is not found '('$count')'. >&2
+        echo $(date +%Y%m%d-%H%M%S) '[notice]' Command to stop this process: '`'kill $$'`'. >&2
         if [ $count -eq 60 ];then
             echo $(date +%Y%m%d-%H%M%S) '[notice]' Timeout, wait a minute. >&2
-            echo $(date +%Y%m%d-%H%M%S) '[notice]' Command to stop this process: '`'kill $$'`'. >&2
             if [ -n "$timeout_trigger_command" ];then
                 echo $(date +%Y%m%d-%H%M%S) '[execute]' "$timeout_trigger_command" >&2
                 echo "$timeout_trigger_command" | sh
@@ -137,6 +145,7 @@ while true; do
         fi
         sleep 1
     else
+        echo $(date +%Y%m%d-%H%M%S) '[notice]' Command to stop this process: '`'kill $$'`'. >&2
         echo -n $(date +%Y%m%d-%H%M%S) >&2
         echo -n ' [notice] ' >&2
         echo -n 'PID of command: ' >&2
@@ -149,7 +158,8 @@ while true; do
                 countdown=60
                 while [ "$countdown" -ge 0 ]; do
                     printf "\r\033[K" >&2
-                    printf %"$countdown"s |tr " " "."
+                    printf %"$countdown"s | tr " " "." >&2
+                    printf "\r"
                     countdown=$((countdown - 1))
                     sleep 1
                 done
