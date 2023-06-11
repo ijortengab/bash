@@ -42,7 +42,7 @@ command="$1"; shift
 
 # Functions.
 printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 printHelp() {
     cat << 'EOF'
@@ -78,7 +78,9 @@ getPid() {
         local pid
         [ -z "$USER" ] && USER=$(whoami)
         basename=$(basename "$__FILE__")
-        pid=$(ps -u $USER -U $USER x | grep "$command_0" | grep -v grep | grep -v "$basename" | grep "$command_clean" | awk '{print $1}')
+        extension="${basename##*.}"
+        filename="${basename%.*}"
+        pid=$(ps -u $USER -U $USER x | grep "$command_0" | grep -v grep | grep -v "$filename" | grep "$command_clean" | awk '{print $1}')
         echo $pid
     elif [[ $(uname | cut -c1-6) == "CYGWIN" ]];then
         local pid command ifs
