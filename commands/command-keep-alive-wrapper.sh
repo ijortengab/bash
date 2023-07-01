@@ -71,6 +71,9 @@ Global Options:
 
 Dependency:
    command-keep-alive.sh
+
+Download:
+   [command-keep-alive.sh](https://github.com/ijortengab/bash/raw/master/commands/command-keep-alive.sh)
 EOF
 }
 
@@ -111,7 +114,7 @@ case "$action" in
         ;;
     run)
         if [ -z "$pid_exists" ];then
-            command-keep-alive.sh "$command" --countdown  --pid-file="$pid_file" --timeout-trigger-command="$timeout_trigger_command" 2>&1
+            command-keep-alive.sh "$command" --pid-file="$pid_file" --timeout-trigger-command="$timeout_trigger_command" 2>&1
         else
             echo $pid
         fi

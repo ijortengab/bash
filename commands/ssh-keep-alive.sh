@@ -10,6 +10,7 @@ while [[ $# -gt 0 ]]; do
         --help|-h) help=1; shift ;;
         --version|-v) version=1; shift ;;
         --daemon) daemon=1; shift ;;
+        --tunnel) tunnel=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -46,6 +47,12 @@ printHelp() {
     cat << 'EOF'
 Usage: ssh-keepalive.sh <pattern> <pid_file> [timeout_trigger_command] [options]
 
+Options:
+   --daemon ^
+        Argument that effect to `command-keep-alive.sh` command.
+   --tunnel ^
+        Argument that effect to `ssh-command-generator.sh` command.
+
 Global Options:
    --version
         Print version of this script.
@@ -55,6 +62,10 @@ Global Options:
 Dependency:
    ssh-command-generator.sh
    command-keep-alive-wrapper.sh
+
+Download:
+   [ssh-command-generator.sh](https://github.com/ijortengab/bash/raw/master/commands/ssh-command-generator.sh)
+   [command-keep-alive-wrapper.sh](https://github.com/ijortengab/bash/raw/master/commands/command-keep-alive-wrapper.sh)
 EOF
 }
 
@@ -65,12 +76,14 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 
 # Dependency.
-while IFS= read -r line; do
-    command -v "${line}" >/dev/null || { echo -e "\e[91m""Unable to proceed, ${line} command not found." "\e[39m"; exit 1; }
+while IFS= read -r line; do    command -v "${line}" >/dev/null || { echo -e "\e[91m""Unable to proceed, ${line} command not found." "\e[39m"; exit 1; }
 done <<< `printHelp | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
 
 # Execute.
-pattern+=.passwordless.keepalive.daemon
+if [ -n "$tunnel" ];then
+    pattern+=.passwordless.keepalive.daemon
+    pattern+=.timeout,3.o,ExitOnForwardFailure=yes
+fi
 command=$(ssh-command-generator.sh "$pattern" )
 if [ $? -gt 0 ];then
     exit 1
@@ -90,6 +103,7 @@ command-keep-alive-wrapper.sh $isdaemon "$command" "$pid_file" "$timeout_trigger
 # '--version|-v'
 # '--help|-h'
 # --daemon
+# --tunnel
 # )
 # VALUE=(
 # )
