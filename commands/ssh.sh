@@ -210,11 +210,7 @@ Ssh_execute() {
     variant=$(echo "$head" | cut -d',' -f 2)
     # Spasi harus single agar sama dengan isi di file /proc/${pid}/cmdline
     CMD=$( cat <<'EOL'
-ssh \
--o ServerAliveInterval=10 -o ServerAliveCountMax=2 \
--o PreferredAuthentications=publickey -o PasswordAuthentication=no \
-OPTION \
-HOST
+ssh -o ServerAliveInterval=10 -o ServerAliveCountMax=2 -o PreferredAuthentications=publickey -o PasswordAuthentication=no OPTION HOST
 EOL
 )
     case "$variant" in
@@ -342,6 +338,15 @@ EOL
                 fi
                 magenta cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$target_port$args_other
                 cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$target_port$args_other
+            }
+            # Tambahkan tvnviewer.exe di PATH-nya Windows.
+            cmd.exe /c where tvnviewer.exe >/dev/null && {
+                args_other=
+                if [ -f "$HOME/.passwd.vnc" ];then
+                    args_other=' -password='"$(<$HOME/.passwd.vnc)"
+                fi
+                magenta cmd.exe /C start tvnviewer.exe -host=$ip -port=$target_port$args_other
+                cmd.exe /C start tvnviewer.exe -host=$ip -port=$target_port$args_other
             }
             ;;
         rdp)
