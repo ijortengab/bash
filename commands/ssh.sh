@@ -93,6 +93,15 @@ magenta() { echo -ne "\e[95m" >&2; echo -n "$@" >&2; echo -e "\e[39m" >&2; }
 x() { exit 1; }
 
 # Functions.
+isWSL() {
+    if [ -f /proc/sys/kernel/osrelease ];then
+        read osrelease </proc/sys/kernel/osrelease
+        if [[ "$osrelease" =~ microsoft || "$osrelease" =~ Microsoft ]];then
+            return 0
+        fi
+    fi
+    return 1
+}
 getPid() {
     if [[ $(uname) == "Linux" ]];then
         pid=$(ps aux | grep "$2" | grep -v grep | awk '{print $2}')
@@ -314,51 +323,49 @@ EOL
     case $trigger in
         http)
             magenta cmd.exe /C start http://$ip:$target_port
-            cmd.exe /C start http://$ip:$target_port
+            cmd.exe /C start http://$ip:$target_port &>/dev/null
             ;;
         scp)
-            # Progra~2 = Program Files (x86)
-            # Simpan session di WinSCP dengan format host:port
-            [ -f "/cygdrive/c/Program Files (x86)/WinSCP/WinSCP.exe" ] && {
-                magenta cmd.exe /C start C:\\Progra~2\\WinSCP\\WinSCP.exe $ip:$target_port
-                cmd.exe /C start C:\\Progra~2\\WinSCP\\WinSCP.exe $ip:$target_port
-            }
-            [ -f "$USERPROFILE/AppData/Local/Programs/WinSCP/WinSCP.exe" ] && {
-                magenta cmd.exe /C start %USERPROFILE%\\AppData\\Local\\Programs\\WinSCP\\WinSCP.exe $ip:$target_port
-                cmd.exe /C start %USERPROFILE%\\AppData\\Local\\Programs\\WinSCP\\WinSCP.exe $ip:$target_port
+            # Tambahkan `%PROGRAMFILES(X86)%\WinSCP` di PATH-nya Windows.
+            # Simpan session di WinSCP dengan format $host:$port
+            cmd.exe /c where WinSCP.exe &>/dev/null && {
+                magenta cmd.exe /C start WinSCP.exe $ip:$target_port
+                cmd.exe /C start WinSCP.exe $ip:$target_port &>/dev/null
             }
             ;;
         vnc)
-            # Progra~1 = Program Files
-            # Simpan password di file "$USERPROFILE/.passwd.vnc"
-            [ -f "/cygdrive/c/Program Files/TightVNC/tvnviewer.exe" ] && {
+            # Tambahkan `%PROGRAMFILES%\TightVNC` di PATH-nya Windows.
+            # Simpan password dengan nama file `.vnc-default-passwd.txt`.
+            # Lokasi di $HOME atau %USERPROFILE%
+            cmd.exe /c where tvnviewer.exe &>/dev/null && {
+                # Cari password di Home.
                 args_other=
-                if [ -f "$USERPROFILE/.passwd.vnc" ];then
-                    args_other=' -password='"$(<$USERPROFILE/.passwd.vnc)"
-                fi
-                magenta cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$target_port$args_other
-                cmd.exe /C start C:\\Progra~1\\TightVNC\\tvnviewer.exe -host=$ip -port=$target_port$args_other
-            }
-            # Tambahkan tvnviewer.exe di PATH-nya Windows.
-            cmd.exe /c where tvnviewer.exe >/dev/null && {
-                args_other=
-                if [ -f "$HOME/.passwd.vnc" ];then
-                    args_other=' -password='"$(<$HOME/.passwd.vnc)"
+                if [ -f "$HOME/.vnc-default-passwd.txt" ];then
+                    args_other=' -password='"$(<$HOME/.vnc-default-passwd.txt)"
+                elif isWSL;then
+                    path=$(cmd.exe /c echo %USERPROFILE% 2>/dev/null)
+                    drive=$(echo "$path" | cut -c1-1 | tr [:upper:] [:lower:])
+                    other=$(echo "$path" | cut -c3-)
+                    other="${other//\\/\/}"
+                    USERPROFILE="/mnt/${drive}${other}"
+                    if [ -f "$USERPROFILE/.vnc-default-passwd.txt" ];then
+                        args_other=' -password='"$(<$USERPROFILE/.vnc-default-passwd.txt)"
+                    fi
                 fi
                 magenta cmd.exe /C start tvnviewer.exe -host=$ip -port=$target_port$args_other
-                cmd.exe /C start tvnviewer.exe -host=$ip -port=$target_port$args_other
+                cmd.exe /C start tvnviewer.exe -host=$ip -port=$target_port$args_other &>/dev/null
             }
             ;;
         rdp)
             magenta cmd.exe /C start mstsc /v:$ip:$target_port
-            cmd.exe /C start mstsc /v:$ip:$target_port
+            cmd.exe /C start mstsc /v:$ip:$target_port &>/dev/null
             ;;
         vpn)
-            # Progra~1 = Program Files
+            # Tambahkan `%PROGRAMFILES%\OpenVPN\bin` di PATH-nya Windows.
             # Simpan config VPN dengan nama $ip-$target_port.ovpn
-            [ -f "/cygdrive/c/Program Files/OpenVPN/bin/openvpn-gui.exe" ] && {
-                magenta cmd.exe /C start C:\\Progra~1\\OpenVPN\\bin\\openvpn-gui.exe --connect $ip-$target_port.ovpn
-                cmd.exe /C start C:\\Progra~1\\OpenVPN\\bin\\openvpn-gui.exe --connect $ip-$target_port.ovpn
+            cmd.exe /c where openvpn-gui.exe &>/dev/null && {
+                magenta cmd.exe /C start openvpn-gui.exe --connect $ip-$target_port.ovpn
+                cmd.exe /C start openvpn-gui.exe --connect $ip-$target_port.ovpn &>/dev/null
             }
             ;;
     esac
