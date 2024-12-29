@@ -330,7 +330,7 @@ EOL
             # Simpan session di WinSCP dengan format $host:$port
             cmd.exe /c where WinSCP.exe &>/dev/null && {
                 magenta cmd.exe /C start WinSCP.exe $ip:$target_port
-                cmd.exe /C start WinSCP.exe $ip:$target_port &>/dev/null
+                cmd.exe /C start WinSCP.exe $ip:$target_port &>/dev/null &
             }
             ;;
         vnc)
@@ -353,19 +353,19 @@ EOL
                     fi
                 fi
                 magenta cmd.exe /C start tvnviewer.exe -host=$ip -port=$target_port$args_other
-                cmd.exe /C start tvnviewer.exe -host=$ip -port=$target_port$args_other &>/dev/null
+                cmd.exe /C start tvnviewer.exe -host=$ip -port=$target_port$args_other &>/dev/null &
             }
             ;;
         rdp)
             magenta cmd.exe /C start mstsc /v:$ip:$target_port
-            cmd.exe /C start mstsc /v:$ip:$target_port &>/dev/null
+            cmd.exe /C start mstsc /v:$ip:$target_port &>/dev/null &
             ;;
         vpn)
             # Tambahkan `%PROGRAMFILES%\OpenVPN\bin` di PATH-nya Windows.
             # Simpan config VPN dengan nama $ip-$target_port.ovpn
             cmd.exe /c where openvpn-gui.exe &>/dev/null && {
                 magenta cmd.exe /C start openvpn-gui.exe --connect $ip-$target_port.ovpn
-                cmd.exe /C start openvpn-gui.exe --connect $ip-$target_port.ovpn &>/dev/null
+                cmd.exe /C start openvpn-gui.exe --connect $ip-$target_port.ovpn &>/dev/null &
             }
             ;;
     esac
